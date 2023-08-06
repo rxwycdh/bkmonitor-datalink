@@ -1,0 +1,17 @@
+service:
+  gin_mode: debug
+  listen: 127.0.0.1
+  port: 10211
+broker:
+  redis:
+    type: "single"
+    host: "127.0.0.1"
+    port: 6379
+    password: 123456
+    database: 0
+log:
+  filename: "./bmw.log"
+  max_size: 200
+  max_age: 1
+  max_backups: 5
+  level: "info"
