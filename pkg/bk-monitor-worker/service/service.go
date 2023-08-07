@@ -10,7 +10,9 @@
 package service
 
 import (
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/http"
@@ -18,7 +20,6 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/metrics"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/worker"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -44,6 +45,9 @@ func prometheusHandler() gin.HandlerFunc {
 func NewHTTPService() *gin.Engine {
 	svr := gin.Default()
 	gin.SetMode(viper.GetString(ginModePath))
+
+	pprof.Register(svr)
+
 	// 注册任务
 	svr.POST("/task/", http.CreateTask)
 
