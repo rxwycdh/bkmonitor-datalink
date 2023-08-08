@@ -13,7 +13,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	goRedis "github.com/go-redis/redis/v8"
 	"github.com/spf13/viper"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
@@ -32,6 +32,8 @@ const (
 	redisDatabasePath         = "store.redis.database"
 	redisDialTimeoutPath      = "store.redis.dial_timeout"
 	redisReadTimeoutPath      = "store.redis.read_timeout"
+	redisPeriodicTaskKeyPath  = "store.redis.periodic_task_key"
+	redisChannelNamePath      = "store.redis.channel_name"
 )
 
 func init() {
@@ -45,11 +47,28 @@ func init() {
 	viper.SetDefault(redisDatabasePath, 0)
 	viper.SetDefault(redisDialTimeoutPath, time.Second*10)
 	viper.SetDefault(redisReadTimeoutPath, time.Second*10)
+	viper.SetDefault(redisPeriodicTaskKeyPath, "bmw:periodic_task")
+	viper.SetDefault(redisChannelNamePath, "bmw:channel:periodic_task")
 }
+
+// GetPeriodicTaskKey return periodic task key
+func GetPeriodicTaskKey() string {
+	return viper.GetString(redisPeriodicTaskKeyPath)
+}
+
+// GetChannelName return channel name
+func GetChannelName() string {
+	return viper.GetString(redisChannelNamePath)
+}
+
+var (
+	PeriodicTaskKey = viper.GetString(redisPeriodicTaskKeyPath)
+	ChannelName     = viper.GetString(redisChannelNamePath)
+)
 
 type Instance struct {
 	ctx    context.Context
-	Client redis.UniversalClient
+	Client goRedis.UniversalClient
 }
 
 var instance *Instance
@@ -128,5 +147,47 @@ func (r *Instance) Delete(key string) error {
 
 // Close close connection
 func (r *Instance) Close() error {
-	return r.Client.Close()
+	if r.Client != nil {
+		return r.Client.Close()
+	}
+	return nil
+}
+
+func (r *Instance) HSet(key, field, value string) error {
+	err := r.Client.HSet(r.ctx, key, field, value).Err()
+	if err != nil {
+		logger.Errorf("hset field error, key: %s, field: %s, value: %s", key, field, value)
+		return err
+	}
+	return nil
+}
+
+func (r *Instance) HGet(key, field string) string {
+	val := r.Client.HGet(r.ctx, key, field).Val()
+	if val == "" {
+		logger.Warnf("hset field error, key: %s, field: %s, value: %s", key, field, val)
+	}
+	return val
+}
+
+func (r *Instance) HGetAll(key string) map[string]string {
+	val := r.Client.HGetAll(r.ctx, key).Val()
+	if len(val) == 0 {
+		logger.Warnf("hset field error, key: %s, value is empty", key)
+	}
+	return val
+}
+
+// Publish
+func (r *Instance) Publish(channelName string, msg interface{}) error {
+	if err := r.Client.Publish(r.ctx, channelName, msg).Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Subscribe subscribe channel from redis
+func (r *Instance) Subscribe(channelNames ...string) <-chan *goRedis.Message {
+	p := r.Client.Subscribe(r.ctx, channelNames...)
+	return p.Channel()
 }

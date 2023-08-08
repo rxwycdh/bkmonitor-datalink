@@ -7,16 +7,28 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package store
+package example
 
 import (
-	"time"
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 )
 
-type Store interface {
-	Open() error                                         // 创建一个连接
-	Put(key, val string, expiration time.Duration) error // 写入数据
-	Get(key string) ([]byte, error)                      // 通过 key 获取数据
-	Delete(key string) error                             // 删除 key
-	Close() error                                        // 关闭连接
+type UserInfo struct {
+	UserID int
+}
+
+// HandleExampleTask
+func HandleExampleTask(ctx context.Context, t *task.Task) error {
+	var p UserInfo
+	if err := json.Unmarshal(t.Payload, &p); err != nil {
+		return fmt.Errorf("json.Unmarshal failed: %v", err)
+	}
+	//逻辑处理start...
+	log.Printf("print user info: user_id=%d", p.UserID)
+	return nil
 }

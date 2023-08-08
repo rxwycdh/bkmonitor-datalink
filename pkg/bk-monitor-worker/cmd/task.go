@@ -55,6 +55,12 @@ func start(cmd *cobra.Command, args []string) {
 	logging.InitLogger()
 
 	// 启动 worker
+	go func() {
+		if err := service.NewWorkerService(); err != nil {
+			logger.Errorf("start worker error, %v", err)
+			panic(err)
+		}
+	}()
 
 	// 启动 http 服务
 	r := service.NewHTTPService()
@@ -69,6 +75,7 @@ func start(cmd *cobra.Command, args []string) {
 			panic(err)
 		}
 	}()
+
 	// 信号处理
 	s := make(chan os.Signal)
 	signal.Notify(s, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)

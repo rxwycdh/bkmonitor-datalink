@@ -9,9 +9,19 @@ broker:
     port: 6379
     password: 123456
     database: 0
+store:
+  redis:
+    type: "single"
+    host: "127.0.0.1"
+    port: 6379
+    password: 123456
+    database: 0
+    periodic_task_key: "bmw:periodic_task"
+    channel_name: "bmw:channel:periodic_task"
 log:
   filename: "./bmw.log"
   max_size: 200
   max_age: 1
   max_backups: 5
   level: "info"
+

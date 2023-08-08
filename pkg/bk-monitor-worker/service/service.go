@@ -63,6 +63,11 @@ func NewWorkerService() error {
 	w, err := worker.NewWorker(
 		worker.WorkerConfig{
 			Concurrency: viper.GetInt(workerConcurrencyPath),
+			// Queues: map[string]int{
+			// 	common.DefaultQueueName: 1,
+			// 	"async_task":            1,
+			// 	"periodic_task":         1,
+			// },
 		},
 	)
 	if err != nil {

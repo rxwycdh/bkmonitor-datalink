@@ -155,7 +155,6 @@ func (p *Processor) Exec() {
 	case <-p.Quit:
 		return
 	case p.Sema <- struct{}{}: // acquire token
-		fmt.Println(p.Sema)
 		qnames := p.Queues()
 		msg, leaseExpirationTime, err := p.Broker.Dequeue(qnames...)
 		switch {

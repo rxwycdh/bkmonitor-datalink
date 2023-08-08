@@ -22,6 +22,7 @@ import (
 )
 
 var RedisClient redis.UniversalClient
+
 var rs *Instance
 
 func newRedisClient() {
@@ -72,4 +73,17 @@ func TestPutGetDeleteData(t *testing.T) {
 	// 校验数据不存在
 	byteData, err = rs.Get(key)
 	assert.Equal(t, string(byteData), "")
+}
+
+func TestHsetHgetData(t *testing.T) {
+	newRedisClient()
+	key, field, val := "bkm-put-test", "test", "test case"
+	err := rs.HSet(key, field, val)
+	assert.Nil(t, err)
+
+	outputVal := rs.HGet(key, field)
+	assert.Equal(t, outputVal, val)
+
+	outputVal = rs.HGet(key, "not_found_field")
+	assert.Empty(t, outputVal)
 }

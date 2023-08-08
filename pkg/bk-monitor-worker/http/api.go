@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/metrics"
+	storeRedis "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/store/redis"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/errors"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/timex"
@@ -68,7 +69,7 @@ func CreateTask(c *gin.Context) {
 			return
 		}
 	} else if strings.HasPrefix(kind, PeriodicTask) {
-		if err := pushTaskToRedis(newedTask); err != nil {
+		if err := pushTaskToRedis(c, newedTask); err != nil {
 			ServerErrResponse(c, "push task to redis error, %v", err)
 			return
 		}
@@ -125,7 +126,24 @@ func enqueueTask(t *task.Task) error {
 }
 
 // 推送任务到 redis 中
-func pushTaskToRedis(t *task.Task) error {
+func pushTaskToRedis(c *gin.Context, t *task.Task) error {
+	r, err := storeRedis.GetInstance(c)
+	if err != nil {
+		return err
+	}
+
+	PeriodicTaskKey := storeRedis.GetPeriodicTaskKey()
+	ChannelName := storeRedis.GetChannelName()
+
+	// expiration set zero，means the key has no expiration time
+	if err := r.HSet(PeriodicTaskKey, t.Kind, string(t.Payload)); err != nil {
+		return err
+	}
+
+	// public msg
+	if err := r.Publish(ChannelName, t.Kind); err != nil {
+		return err
+	}
 
 	return nil
 }

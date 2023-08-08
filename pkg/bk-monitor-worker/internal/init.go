@@ -9,6 +9,11 @@
 
 package internal
 
-import "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/processor"
+import (
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/example"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/processor"
+)
 
-var RegisterTaskHandleFunc = map[string]processor.HandlerFunc{}
+var RegisterTaskHandleFunc = map[string]processor.HandlerFunc{
+	"async:test_example": example.HandleExampleTask,
+}
