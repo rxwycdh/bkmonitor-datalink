@@ -7,10 +7,22 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package runtimex
 
-import "context"
+import (
+	"os"
+	"testing"
 
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+	"github.com/stretchr/testify/assert"
+)
+
+// TestGetPid
+func TestGetPid(t *testing.T) {
+	name := "ls"
+	args := []string{"/tmp"}
+	attr := &os.ProcAttr{}
+	os.StartProcess(name, args, attr)
+	// proc.Wait()
+	pids, _ := GetPidByServiceName(name)
+	assert.NotEmpty(t, pids)
 }

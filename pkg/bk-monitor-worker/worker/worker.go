@@ -114,7 +114,6 @@ func NewWorker(cfg WorkerConfig) (*Worker, error) {
 	if err != nil {
 		return nil, err
 	}
-	finished := make(chan *task.TaskMessage)
 
 	delayedTaskCheckInterval := cfg.DelayedTaskCheckInterval
 	if delayedTaskCheckInterval == 0 {
@@ -136,7 +135,6 @@ func NewWorker(cfg WorkerConfig) (*Worker, error) {
 		StrictPriority:  cfg.StrictPriority,
 		ErrHandler:      cfg.ErrorHandler,
 		ShutdownTimeout: shutdownTimeout,
-		Finished:        finished,
 	})
 	return &Worker{
 		broker:    rdb,

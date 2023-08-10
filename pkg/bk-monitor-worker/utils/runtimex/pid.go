@@ -7,10 +7,18 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package runtimex
 
-import "context"
+import (
+	"os/exec"
+	"strings"
+)
 
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+// GetPid get the pid by service name
+func GetPidByServiceName(serviceName string) ([]string, error) {
+	c := `ps ux | awk '/` + serviceName + `/ && !/awk/ {print $2}'`
+	o, err := exec.Command("/bin/sh", "-c", c).Output()
+	s := strings.TrimSpace(string(o))
+	l := strings.Split(s, "\n")
+	return l, err
 }

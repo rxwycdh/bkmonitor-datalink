@@ -7,7 +7,7 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package redis
+package dependentredis
 
 import (
 	"context"
@@ -21,19 +21,17 @@ import (
 )
 
 const (
-	redisModePath             = "store.redis.mode"
-	redisMasterNamePath       = "store.redis.master_name"
-	redisAddressPath          = "store.redis.address"
-	redisHostPath             = "store.redis.host"
-	redisPortPath             = "store.redis.port"
-	redisUsernamePath         = "store.redis.username"
-	redisSentinelPasswordPath = "store.redis.sentinel_password"
-	redisPasswordPath         = "store.redis.password"
-	redisDatabasePath         = "store.redis.database"
-	redisDialTimeoutPath      = "store.redis.dial_timeout"
-	redisReadTimeoutPath      = "store.redis.read_timeout"
-	redisPeriodicTaskKeyPath  = "store.redis.periodic_task_key"
-	redisChannelNamePath      = "store.redis.channel_name"
+	redisModePath             = "store.dependent_redis.mode"
+	redisMasterNamePath       = "store.dependent_redis.master_name"
+	redisAddressPath          = "store.dependent_redis.address"
+	redisHostPath             = "store.dependent_redis.host"
+	redisPortPath             = "store.dependent_redis.port"
+	redisUsernamePath         = "store.dependent_redis.username"
+	redisSentinelPasswordPath = "store.dependent_redis.sentinel_password"
+	redisPasswordPath         = "store.dependent_redis.password"
+	redisDatabasePath         = "store.dependent_redis.database"
+	redisDialTimeoutPath      = "store.dependent_redis.dial_timeout"
+	redisReadTimeoutPath      = "store.dependent_redis.read_timeout"
 )
 
 func init() {
@@ -47,24 +45,7 @@ func init() {
 	viper.SetDefault(redisDatabasePath, 0)
 	viper.SetDefault(redisDialTimeoutPath, time.Second*10)
 	viper.SetDefault(redisReadTimeoutPath, time.Second*10)
-	viper.SetDefault(redisPeriodicTaskKeyPath, "bmw:periodic_task")
-	viper.SetDefault(redisChannelNamePath, "bmw:channel:periodic_task")
 }
-
-// GetPeriodicTaskKey return periodic task key
-func GetPeriodicTaskKey() string {
-	return viper.GetString(redisPeriodicTaskKeyPath)
-}
-
-// GetChannelName return channel name
-func GetChannelName() string {
-	return viper.GetString(redisChannelNamePath)
-}
-
-var (
-	PeriodicTaskKey = viper.GetString(redisPeriodicTaskKeyPath)
-	ChannelName     = viper.GetString(redisChannelNamePath)
-)
 
 type Instance struct {
 	ctx    context.Context

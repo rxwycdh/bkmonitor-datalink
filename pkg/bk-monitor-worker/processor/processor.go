@@ -63,8 +63,6 @@ type Processor struct {
 
 	// abort operatr
 	Abort chan struct{}
-
-	Finished chan<- *t.TaskMessage
 }
 
 type ProcessorParams struct {
@@ -77,7 +75,6 @@ type ProcessorParams struct {
 	StrictPriority  bool
 	ErrHandler      ErrorHandler
 	ShutdownTimeout time.Duration
-	Finished        chan<- *t.TaskMessage
 }
 
 // NewProcessor constructs a new processor.
@@ -102,7 +99,6 @@ func NewProcessor(params ProcessorParams) *Processor {
 		ErrHandler:      params.ErrHandler,
 		Handler:         HandlerFunc(func(ctx context.Context, t *t.Task) error { return fmt.Errorf("handler not set") }),
 		ShutdownTimeout: params.ShutdownTimeout,
-		Finished:        params.Finished,
 	}
 }
 
@@ -126,7 +122,7 @@ func (p *Processor) Shutdown() {
 	time.AfterFunc(p.ShutdownTimeout, func() { close(p.Abort) })
 
 	logger.Info("Waiting for all workers to finish...")
-	// block until all workers have released the token
+	// 直到所有都释放
 	for i := 0; i < cap(p.Sema); i++ {
 		p.Sema <- struct{}{}
 	}
@@ -172,7 +168,6 @@ func (p *Processor) Exec() {
 		deadline := p.ComputeDeadline(msg)
 		go func() {
 			defer func() {
-				p.Finished <- msg
 				<-p.Sema // release token
 			}()
 
@@ -219,6 +214,8 @@ func (p *Processor) Exec() {
 					p.HandleFailedMessage(ctx, lease, msg, resErr)
 					return
 				}
+
+				metrics.RunTaskSuccessCount(msg.Kind)
 				p.HandleSucceededMessage(lease, msg)
 			}
 		}()

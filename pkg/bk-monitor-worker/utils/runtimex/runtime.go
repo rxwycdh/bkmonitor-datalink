@@ -7,10 +7,18 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package runtimex
 
-import "context"
+import "runtime"
 
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+// GetFuncName get function name
+func GetFuncName() string {
+	pc, _, _, _ := runtime.Caller(1)
+	return runtime.FuncForPC(pc).Name()
+}
+
+// GetCallerFuncName get caller function name
+func GetCallerFuncName() string {
+	pc, _, _, _ := runtime.Caller(2)
+	return runtime.FuncForPC(pc).Name()
 }

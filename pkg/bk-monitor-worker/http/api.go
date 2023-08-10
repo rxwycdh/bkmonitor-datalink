@@ -120,7 +120,6 @@ func enqueueTask(t *task.Task) error {
 	if _, err = client.Enqueue(t); err != nil {
 		return errors.New(fmt.Sprintf("enqueue task error, %v", err))
 	}
-	metrics.EnqueueTaskCount(t.Kind)
 
 	return nil
 }

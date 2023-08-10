@@ -10,6 +10,9 @@
 package service
 
 import (
+	"context"
+	"sync"
+
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -18,6 +21,9 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/http"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/metrics"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
+	t "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
+	redisWatcher "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/watcher/redis"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/worker"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
@@ -57,31 +63,60 @@ func NewHTTPService() *gin.Engine {
 	return svr
 }
 
+// NewWatcherService new a watcher service
+func NewWatcherService(ctx context.Context) error {
+	watcher := redisWatcher.NewWatcher(ctx, new(sync.WaitGroup))
+	return watcher.Watch(ctx)
+}
+
 // NewWorkerService new a worker service
 func NewWorkerService() error {
 	// TODO: 暂时不指定队列
 	w, err := worker.NewWorker(
 		worker.WorkerConfig{
 			Concurrency: viper.GetInt(workerConcurrencyPath),
-			// Queues: map[string]int{
-			// 	common.DefaultQueueName: 1,
-			// 	"async_task":            1,
-			// 	"periodic_task":         1,
-			// },
 		},
 	)
 	if err != nil {
 		logger.Errorf("start a worker service error, %v", err)
 		return err
 	}
-	// 加载 handle
+	// init async task handle
 	mux := worker.NewServeMux()
 	for p, h := range internal.RegisterTaskHandleFunc {
+		mux.HandleFunc(p, h)
+	}
+	// init periodic task handler
+	for p, h := range internal.RegisterPeriodicTaskHandlerFunc {
 		mux.HandleFunc(p, h)
 	}
 	if err := w.Run(mux); err != nil {
 		logger.Errorf("run worker run")
 		return err
 	}
+	return nil
+}
+
+// NewPeriodicTaskService new a periodic task scheduler
+func NewPeriodicTaskSchedulerService() error {
+	scheduler, err := worker.NewScheduler(nil)
+	if err != nil {
+		return err
+	}
+	for name, cronSpec := range internal.RegisterPeriodicTaskCronSpec {
+		periodicTask := t.NewPeriodicTask(cronSpec, name, nil)
+		// register task to schedule with task id, in order to not repeat
+		entryID, err := scheduler.Register(periodicTask.CronSpec, periodicTask.Task, task.TaskID(name))
+		if err != nil {
+			logger.Errorf("register task error, kind: %s, entry id: %d", periodicTask.Task.Kind, entryID)
+			return err
+		}
+	}
+
+	if err := scheduler.Run(); err != nil {
+		logger.Errorf("start scheduler error, %v", err)
+		return err
+	}
+
 	return nil
 }

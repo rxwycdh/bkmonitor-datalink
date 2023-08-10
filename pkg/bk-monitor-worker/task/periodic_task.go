@@ -7,10 +7,18 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package task
 
-import "context"
+// PeriodicTask periodic task struct
+type PeriodicTask struct {
+	CronSpec string
+	Task     *Task
+}
 
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+// NewPeriodicTask creates a new PeriodicTask
+func NewPeriodicTask(cronSpec string, kind string, payload []byte, opts ...Option) *PeriodicTask {
+	return &PeriodicTask{
+		CronSpec: cronSpec,
+		Task:     NewTask(kind, payload, opts...),
+	}
 }

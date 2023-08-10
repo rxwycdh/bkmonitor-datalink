@@ -7,10 +7,16 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package slicex
 
-import "context"
-
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+// RemoveItem remove the item from string array
+func RemoveItem(l []string, s string) []string {
+	i := 0
+	for _, val := range l {
+		if val != s {
+			l[i] = val
+			i++
+		}
+	}
+	return l[:i]
 }

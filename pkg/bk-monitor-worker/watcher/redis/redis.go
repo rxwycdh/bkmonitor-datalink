@@ -8,3 +8,58 @@
 // specific language governing permissions and limitations under the License.
 
 package redis
+
+import (
+	"context"
+	"sync"
+
+	storeRedis "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/store/redis"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
+)
+
+type Watcher struct {
+	instance *storeRedis.Instance
+	wg       *sync.WaitGroup
+}
+
+var watcher *Watcher
+
+// NewWatcher new a subscription service
+func NewWatcher(ctx context.Context, wg *sync.WaitGroup) *Watcher {
+	if watcher != nil {
+		return watcher
+	}
+	if wg == nil {
+		wg = new(sync.WaitGroup)
+	}
+	instance, err := storeRedis.GetInstance(ctx)
+	if err != nil {
+		logger.Errorf("get redis instance error, %v", err)
+	}
+	watcher = &Watcher{
+		instance: instance,
+		wg:       wg,
+	}
+	return watcher
+}
+
+// Watch sub a channel
+func (s *Watcher) Watch(ctx context.Context) error {
+	ch := s.instance.Subscribe(storeRedis.GetChannelName())
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Warnf("subscription service exist")
+				return
+			// get payload from redis
+			case msg := <-ch:
+				logger.Infof("subscribe msg: %s", msg.String())
+				// refresh payload to mem
+			}
+		}
+	}()
+	return nil
+}

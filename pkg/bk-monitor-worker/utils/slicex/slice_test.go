@@ -7,10 +7,19 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package slicex
 
-import "context"
+import (
+	"testing"
 
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+	"github.com/stretchr/testify/assert"
+)
+
+// TestRemoveItem
+func TestRemoveItem(t *testing.T) {
+	srcSlice := []string{"a", "b", "c", "d"}
+	expectedSlice := []string{"a", "c", "d"}
+
+	dstSlice := RemoveItem(srcSlice, "b")
+	assert.Equal(t, expectedSlice, dstSlice)
 }

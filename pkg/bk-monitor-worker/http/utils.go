@@ -13,9 +13,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/common"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/common"
 )
 
 // BindJSON
@@ -50,7 +51,7 @@ func Response(c *gin.Context, h *gin.H) {
 	// 默认状态码为 200
 	status := 200
 	response := MergeGinH(&gin.H{
-		"result":  false,
+		"result":  true,
 		"message": "ok",
 		"code":    common.Success,
 		"data":    nil,

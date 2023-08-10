@@ -17,7 +17,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -54,6 +53,22 @@ func start(cmd *cobra.Command, args []string) {
 	// 初始化日志
 	logging.InitLogger()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// 启动 watcher
+	if err := service.NewWatcherService(ctx); err != nil {
+		logger.Fatalf("start watcher error: %v", err)
+		panic(err)
+	}
+
+	// 启动 periodic task scheduler
+	go func() {
+		if err := service.NewPeriodicTaskSchedulerService(); err != nil {
+			logger.Fatalf("start periodic task scheduler error: %v", err)
+			panic(err)
+		}
+	}()
+
 	// 启动 worker
 	go func() {
 		if err := service.NewWorkerService(); err != nil {
@@ -82,7 +97,6 @@ func start(cmd *cobra.Command, args []string) {
 	for {
 		switch <-s {
 		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			if err := srv.Shutdown(ctx); err != nil {
 				log.Fatalf("shutdown service error : %s", err)

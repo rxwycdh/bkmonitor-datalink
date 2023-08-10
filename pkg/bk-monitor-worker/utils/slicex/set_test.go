@@ -7,10 +7,28 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package slicex
 
-import "context"
+import (
+	"testing"
 
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+	mapset "github.com/deckarep/golang-set"
+	"github.com/stretchr/testify/assert"
+)
+
+// TestStringSet2List
+func TestStringSet2List(t *testing.T) {
+	m := StringList2Set([]string{"a", "b", "c"})
+	mStr := StringSet2List(m)
+	assert.Equal(t, len(mStr), 3)
+}
+
+// TestStringList2Set
+func TestStringList2Set(t *testing.T) {
+	m := StringList2Set([]string{"a", "b", "a"})
+	expected := mapset.NewSet()
+	for _, v := range []string{"a", "b"} {
+		expected.Add(v)
+	}
+	assert.Equal(t, expected, m)
 }

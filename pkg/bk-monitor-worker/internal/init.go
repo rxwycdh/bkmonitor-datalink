@@ -11,9 +11,20 @@ package internal
 
 import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/example"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/metadata/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/processor"
 )
 
+// RegisterTaskHandleFunc async task map, format: task: taskhandler
 var RegisterTaskHandleFunc = map[string]processor.HandlerFunc{
 	"async:test_example": example.HandleExampleTask,
+}
+
+// RegisterPeriodicTaskHandlerFunc periodic task map
+var RegisterPeriodicTaskHandlerFunc = map[string]processor.HandlerFunc{
+	"periodic:metadata:refresh_ts_metric": task.RefreshTimeSeriesMetric,
+}
+
+var RegisterPeriodicTaskCronSpec = map[string]string{
+	"periodic:metadata:refresh_ts_metric": "*/3 * * * *",
 }

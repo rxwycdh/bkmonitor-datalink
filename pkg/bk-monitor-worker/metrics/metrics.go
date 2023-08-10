@@ -58,7 +58,7 @@ func EnqueueTaskCount(taskName string) error {
 
 // RunTaskCount run task count
 func RunTaskCount(taskName string) error {
-	metric, err := taskCount.GetMetricWithLabelValues(taskName, "success")
+	metric, err := taskCount.GetMetricWithLabelValues(taskName, "received")
 	if err != nil {
 		logger.Errorf("prom get metric failed: %s", err)
 		return err

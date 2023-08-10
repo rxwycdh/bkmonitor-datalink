@@ -30,3 +30,25 @@ func String2byte(s string) []byte {
 func IsEmpty(s string) bool {
 	return strings.TrimSpace(s) == ""
 }
+
+// StringInSlice 判断字符串是否存在 Slice 中
+func StringInSlice(str string, list []string) bool {
+	for _, item := range list {
+		if item == str {
+			return true
+		}
+	}
+	return false
+}
+
+// SplitString 分割字符串, 允许半角逗号、分号、空格
+func SplitString(str string) []string {
+	str = strings.Replace(str, ";", ",", -1)
+	str = strings.Replace(str, " ", ",", -1)
+	return strings.Split(str, ",")
+}
+
+// SplitStringByDot 点分割字符串
+func SplitStringByDot(str string) []string {
+	return strings.Split(str, ".")
+}

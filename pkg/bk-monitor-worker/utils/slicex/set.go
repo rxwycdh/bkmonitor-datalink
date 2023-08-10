@@ -7,10 +7,27 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package slicex
 
-import "context"
+import (
+	mapset "github.com/deckarep/golang-set"
+)
 
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+// Set2List convert set to list
+func StringSet2List(s mapset.Set) []string {
+	t := s.ToSlice()
+	var l []string
+	for _, v := range t {
+		l = append(l, v.(string))
+	}
+	return l
+}
+
+// StringList2Set convert list to set
+func StringList2Set(l []string) mapset.Set {
+	set := mapset.NewSet()
+	for _, i := range l {
+		set.Add(i)
+	}
+	return set
 }

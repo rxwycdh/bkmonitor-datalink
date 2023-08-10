@@ -17,6 +17,7 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/broker"
 	rdb "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/broker/redis"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/common"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/metrics"
 	t "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/errors"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/stringx"
@@ -47,6 +48,7 @@ func (c *Client) Close() error {
 
 // Enqueue 入队列
 func (c *Client) Enqueue(task *t.Task, opts ...t.Option) (*t.TaskInfo, error) {
+	metrics.EnqueueTaskCount(task.Kind)
 	return c.EnqueueWithContext(context.Background(), task, opts...)
 }
 

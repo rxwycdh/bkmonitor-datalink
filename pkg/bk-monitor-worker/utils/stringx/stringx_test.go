@@ -21,3 +21,22 @@ func TestString2byte(t *testing.T) {
 
 	assert.Equal(t, String2byte(src), dest)
 }
+
+func TestStringInSlice(t *testing.T) {
+	assert.True(t, StringInSlice("a", []string{"a", "b"}))
+	assert.False(t, StringInSlice("a", []string{"b", "c"}))
+}
+
+func TestSplitString(t *testing.T) {
+	assert.Equal(t, []string{"a", "b"}, SplitString("a,b"))
+	assert.Equal(t, []string{"a", "b"}, SplitString("a b"))
+	assert.Equal(t, []string{"a", "b"}, SplitString("a;b"))
+
+	assert.Equal(t, []string{"a.b"}, SplitString("a.b"))
+}
+
+func TestSplitStringByDot(t *testing.T) {
+	assert.Equal(t, []string{"a", "b"}, SplitStringByDot("a.b"))
+
+	assert.Equal(t, []string{"a,b"}, SplitStringByDot("a,b"))
+}

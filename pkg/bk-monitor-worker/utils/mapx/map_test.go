@@ -7,10 +7,16 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package watcher
+package mapx
 
-import "context"
+import (
+	"testing"
 
-type Watcher interface {
-	Watch(ctx context.Context, path string) (<-chan interface{}, error)
+	"github.com/stretchr/testify/assert"
+)
+
+// TestIsMapKey
+func TestIsMapKey(t *testing.T) {
+	assert.True(t, IsMapKey("a", map[string]interface{}{"a": "a", "b": "b"}))
+	assert.False(t, IsMapKey("a", map[string]interface{}{"a1": "a"}))
 }
