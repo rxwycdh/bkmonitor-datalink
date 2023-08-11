@@ -1,5 +1,5 @@
 PWD = $(shell pwd)
-MODULES ?= bkmonitorbeat collector crontask operator transfer unify-query influxdb-proxy ingester offline-data-archive
+MODULES ?= bkmonitorbeat collector crontask operator transfer unify-query influxdb-proxy ingester offline-data-archive bk-monitor-worker
 RELEASE_PATH ?= $(PWD)/dist
 BUILD_NO ?= 1
 COMMIT_ID = $(shell git rev-parse HEAD)
@@ -20,7 +20,7 @@ TAG = pkg/$(MODULE)/v$(VERSION)
 PIP_PATH ?= $(shell which pip)
 
 .PHONY: all
-all: bkmonitorbeat collector crontask operator transfer unify-query influxdb-proxy ingester offline-data-archive
+all: bkmonitorbeat collector crontask operator transfer unify-query influxdb-proxy ingester offline-data-archive bk-monitor-worker
 
 .PHONY: .check_module_vars
 .check_module_vars:
@@ -67,6 +67,10 @@ ingester:
 .PHONY: offline-data-archive
 offline-data-archive:
 	$(MAKE) MODULE=offline-data-archive build
+
+.PHONY: bk-monitor-worker
+bk-monitor-worker:
+	$(MAKE) MODULE=bk-monitor-worker build
 
 .PHONY: version
 version: .check_module_vars
