@@ -6,8 +6,8 @@ RUN mkdir -p /data/bkmonitor/logs  /data/bkmonitor/config
 
 WORKDIR /data/bkmonitor
 
-ADD bin/bmw /data/bkmonitor/bmw
-RUN chmod +x /data/bkmonitor/bmw
+ADD bin/bk-monitor-worker /data/bkmonitor/bk-monitor-worker
+RUN chmod +x /data/bkmonitor/bk-monitor-worker
 
-ENTRYPOINT ["/data/bkmonitor/bmw"]
+ENTRYPOINT ["/data/bkmonitor/bk-monitor-worker"]
 CMD ["-c", "/data/bkmonitor/config/bmw.yaml"]

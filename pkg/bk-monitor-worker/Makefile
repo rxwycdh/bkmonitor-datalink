@@ -1,6 +1,6 @@
 .PHONY: build test tidy
 
-SERVICENAME=bmw
+SERVICENAME=bk-monitor-worker
 WORKSPACE=$(shell pwd)
 
 ifdef VERSION
