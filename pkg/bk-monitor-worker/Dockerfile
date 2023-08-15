@@ -8,6 +8,3 @@ WORKDIR /data/bkmonitor
 
 ADD bin/bk-monitor-worker /data/bkmonitor/bk-monitor-worker
 RUN chmod +x /data/bkmonitor/bk-monitor-worker
-
-ENTRYPOINT ["/data/bkmonitor/bk-monitor-worker"]
-CMD ["-c", "/data/bkmonitor/config/bmw.yaml"]

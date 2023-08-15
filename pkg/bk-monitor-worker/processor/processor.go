@@ -281,8 +281,8 @@ func (p *Processor) HandleFailedMessage(ctx context.Context, l *common.Lease, ms
 		p.ErrHandler.HandleError(ctx, t.NewTask(msg.Kind, msg.Payload), err)
 	}
 	if !p.IsFailureFunc(err) {
-		// retry the task without marking it as failed
-		p.Retry(l, msg, err, false /*isFailure*/)
+		// retry the task
+		p.Retry(l, msg, err, false)
 		return
 	}
 	skipRetryErr := errors.New("skip retry for the task")
@@ -290,7 +290,7 @@ func (p *Processor) HandleFailedMessage(ctx context.Context, l *common.Lease, ms
 		logger.Warnf("Retry exhausted for task id=%s", msg.ID)
 		p.Archive(l, msg, err)
 	} else {
-		p.Retry(l, msg, err, true /*isFailure*/)
+		p.Retry(l, msg, err, true)
 	}
 }
 

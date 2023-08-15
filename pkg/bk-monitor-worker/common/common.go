@@ -407,7 +407,6 @@ func (c *Cancelations) Get(id string) (fn context.CancelFunc, ok bool) {
 }
 
 // Lease is a time bound lease for worker to process task.
-// It provides a communication channel between lessor and lessee about lease expiration.
 type Lease struct {
 	once sync.Once
 	ch   chan struct{}

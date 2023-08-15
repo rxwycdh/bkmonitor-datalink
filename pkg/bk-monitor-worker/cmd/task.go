@@ -12,7 +12,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -35,18 +34,20 @@ const (
 func init() {
 	viper.SetDefault(serviceListenPath, "127.0.0.1")
 	viper.SetDefault(servicePortPath, 10211)
+	// add subcommand
+	rootCmd.AddCommand(taskCmd)
 }
 
-var rootCmd = &cobra.Command{
-	Use:   "run",
-	Short: "bk-monitor workers",
+var taskCmd = &cobra.Command{
+	Use:   "task",
+	Short: "bk monitor tasks",
 	Long:  "worker module for blueking monitor",
-	Run:   start,
+	Run:   startTask,
 }
 
 // start 启动服务
-func start(cmd *cobra.Command, args []string) {
-	fmt.Println("start service...")
+func startTask(cmd *cobra.Command, args []string) {
+	fmt.Println("start task service...")
 	// 初始化配置
 	config.InitConfig()
 
@@ -58,22 +59,12 @@ func start(cmd *cobra.Command, args []string) {
 	// 启动 watcher
 	if err := service.NewWatcherService(ctx); err != nil {
 		logger.Fatalf("start watcher error: %v", err)
-		panic(err)
 	}
 
 	// 启动 periodic task scheduler
 	go func() {
 		if err := service.NewPeriodicTaskSchedulerService(); err != nil {
 			logger.Fatalf("start periodic task scheduler error: %v", err)
-			panic(err)
-		}
-	}()
-
-	// 启动 worker
-	go func() {
-		if err := service.NewWorkerService(); err != nil {
-			logger.Errorf("start worker error, %v", err)
-			panic(err)
 		}
 	}()
 
@@ -87,7 +78,6 @@ func start(cmd *cobra.Command, args []string) {
 		// 服务连接
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatalf("listen addr error, %v", err)
-			panic(err)
 		}
 	}()
 
@@ -99,22 +89,10 @@ func start(cmd *cobra.Command, args []string) {
 		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
 			defer cancel()
 			if err := srv.Shutdown(ctx); err != nil {
-				log.Fatalf("shutdown service error : %s", err)
+				logger.Fatalf("shutdown service error : %s", err)
 			}
 			logger.Warn("service exit by syscall SIGQUIT, SIGTERM or SIGINT")
 			return
 		}
-	}
-}
-
-// Execute 执行命令
-func Execute() {
-	rootCmd.Flags().StringVarP(
-		&config.ConfigPath, "config", "c", "", "path of project service config files",
-	)
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Printf("start bmw service error, %s", err)
-		os.Exit(1)
 	}
 }
