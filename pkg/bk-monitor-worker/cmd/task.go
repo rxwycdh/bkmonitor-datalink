@@ -27,13 +27,13 @@ import (
 )
 
 const (
-	serviceListenPath = "service.listen"
-	servicePortPath   = "service.port"
+	serviceTaskListenPath = "service.task.listen"
+	serviceTaskPortPath   = "service.task.port"
 )
 
 func init() {
-	viper.SetDefault(serviceListenPath, "127.0.0.1")
-	viper.SetDefault(servicePortPath, 10211)
+	viper.SetDefault(serviceTaskListenPath, "127.0.0.1")
+	viper.SetDefault(serviceTaskPortPath, 10211)
 	// add subcommand
 	rootCmd.AddCommand(taskCmd)
 }
@@ -68,10 +68,10 @@ func startTask(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	// 启动 http 服务
-	r := service.NewHTTPService()
+	// start http service, include api router
+	r := service.NewHTTPService(true)
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", viper.GetString(serviceListenPath), viper.GetInt(servicePortPath)),
+		Addr:    fmt.Sprintf("%s:%d", viper.GetString(serviceTaskListenPath), viper.GetInt(serviceTaskPortPath)),
 		Handler: r,
 	}
 	go func() {
@@ -91,7 +91,7 @@ func startTask(cmd *cobra.Command, args []string) {
 			if err := srv.Shutdown(ctx); err != nil {
 				logger.Fatalf("shutdown service error : %s", err)
 			}
-			logger.Warn("service exit by syscall SIGQUIT, SIGTERM or SIGINT")
+			logger.Warn("task service exit by syscall SIGQUIT, SIGTERM or SIGINT")
 			return
 		}
 	}

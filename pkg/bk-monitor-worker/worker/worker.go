@@ -165,8 +165,6 @@ func (w *Worker) Run(handler processor.Handler) error {
 	if err := w.Start(handler); err != nil {
 		return err
 	}
-	w.waitForSignals()
-	w.Shutdown()
 	return nil
 }
 

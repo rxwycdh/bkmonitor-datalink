@@ -10,15 +10,33 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/logging"
 	service "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
+
+const (
+	serviceWorkerListenPath = "service.worker.listen"
+	serviceWorkerPortPath   = "service.worker.port"
+)
+
+func init() {
+	viper.SetDefault(serviceWorkerListenPath, "127.0.0.1")
+	viper.SetDefault(serviceWorkerPortPath, 10212)
+	// add subcommand
+	rootCmd.AddCommand(taskCmd)
+}
 
 func init() {
 	rootCmd.AddCommand(workerCmd)
@@ -40,10 +58,40 @@ func startWroker(cmd *cobra.Command, args []string) {
 	// 初始化日志
 	logging.InitLogger()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// 启动 worker
-	if err := service.NewWorkerService(); err != nil {
+	workerSvr, err := service.NewWorkerService()
+	if err != nil {
 		logger.Fatalf("start worker error, %v", err)
 	}
 
-	logger.Info("worker service stopped")
+	// start http service, not include api router
+	r := service.NewHTTPService(false)
+	srv := &http.Server{
+		Addr:    fmt.Sprintf("%s:%d", viper.GetString(serviceWorkerListenPath), viper.GetInt(serviceWorkerPortPath)),
+		Handler: r,
+	}
+	go func() {
+		// 服务连接
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatalf("listen addr error, %v", err)
+		}
+	}()
+
+	// 信号处理
+	s := make(chan os.Signal)
+	signal.Notify(s, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
+	for {
+		switch <-s {
+		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
+			defer cancel()
+			workerSvr.Shutdown()
+			if err := srv.Shutdown(ctx); err != nil {
+				logger.Fatalf("shutdown service error : %s", err)
+			}
+			logger.Warn("worker service exit by syscall SIGQUIT, SIGTERM or SIGINT")
+			return
+		}
+	}
 }

@@ -1,7 +1,12 @@
 service:
-  gin_mode: debug
-  listen: 127.0.0.1
-  port: 10211
+  task:
+    gin_mode: release
+    listen: 127.0.0.1
+    port: 10211
+  worker:
+    gin_mode: release
+    listen: 127.0.0.1
+    port: 10212
 broker:
   redis:
     type: "single"

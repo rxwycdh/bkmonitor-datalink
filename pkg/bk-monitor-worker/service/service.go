@@ -48,14 +48,16 @@ func prometheusHandler() gin.HandlerFunc {
 }
 
 // NewHTTPService new a http service
-func NewHTTPService() *gin.Engine {
+func NewHTTPService(enableApi bool) *gin.Engine {
 	svr := gin.Default()
 	gin.SetMode(viper.GetString(ginModePath))
 
 	pprof.Register(svr)
 
 	// 注册任务
-	svr.POST("/task/", http.CreateTask)
+	if enableApi {
+		svr.POST("/task/", http.CreateTask)
+	}
 
 	// metrics
 	svr.GET("/metrics", prometheusHandler())
@@ -70,7 +72,7 @@ func NewWatcherService(ctx context.Context) error {
 }
 
 // NewWorkerService new a worker service
-func NewWorkerService() error {
+func NewWorkerService() (*worker.Worker, error) {
 	// TODO: 暂时不指定队列
 	w, err := worker.NewWorker(
 		worker.WorkerConfig{
@@ -79,7 +81,7 @@ func NewWorkerService() error {
 	)
 	if err != nil {
 		logger.Errorf("start a worker service error, %v", err)
-		return err
+		return w, err
 	}
 	// init async task handle
 	mux := worker.NewServeMux()
@@ -92,9 +94,9 @@ func NewWorkerService() error {
 	}
 	if err := w.Run(mux); err != nil {
 		logger.Errorf("run worker run")
-		return err
+		return w, err
 	}
-	return nil
+	return w, err
 }
 
 // NewPeriodicTaskService new a periodic task scheduler
