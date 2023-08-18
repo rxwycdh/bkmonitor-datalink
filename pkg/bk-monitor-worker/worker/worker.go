@@ -58,6 +58,7 @@ type WorkerConfig struct {
 }
 
 // DefaultRetryDelayFunc default retry time
+// NOTE: retry time from fab
 func DefaultRetryDelayFunc(n int, e error, t *task.Task) time.Duration {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	s := int(math.Pow(float64(n), 4)) + 15 + (r.Intn(30) * (n + 1))

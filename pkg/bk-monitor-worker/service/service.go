@@ -22,7 +22,6 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/metrics"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
-	t "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 	redisWatcher "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/watcher/redis"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/worker"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
@@ -93,7 +92,7 @@ func NewWorkerService() (*worker.Worker, error) {
 		mux.HandleFunc(p, h)
 	}
 	if err := w.Run(mux); err != nil {
-		logger.Errorf("run worker run")
+		logger.Errorf("run worker error, %v", err)
 		return w, err
 	}
 	return w, err
@@ -106,7 +105,9 @@ func NewPeriodicTaskSchedulerService() error {
 		return err
 	}
 	for name, cronSpec := range internal.RegisterPeriodicTaskCronSpec {
-		periodicTask := t.NewPeriodicTask(cronSpec, name, nil)
+		// periodic task retry is 0
+		retryOpt := task.MaxRetry(0)
+		periodicTask := task.NewPeriodicTask(cronSpec, name, nil, retryOpt)
 		// register task to schedule with task id, in order to not repeat
 		entryID, err := scheduler.Register(periodicTask.CronSpec, periodicTask.Task, task.TaskID(name))
 		if err != nil {

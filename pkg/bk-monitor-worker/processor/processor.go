@@ -294,7 +294,7 @@ func (p *Processor) HandleFailedMessage(ctx context.Context, l *common.Lease, ms
 	}
 }
 
-// Retry retry task
+// Retry retry task with a intervals
 func (p *Processor) Retry(l *common.Lease, msg *t.TaskMessage, e error, isFailure bool) {
 	ctx, _ := context.WithDeadline(context.Background(), l.Deadline())
 	d := p.RetryDelayFunc(msg.Retried, e, t.NewTask(msg.Kind, msg.Payload))

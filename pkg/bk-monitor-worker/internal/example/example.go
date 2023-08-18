@@ -12,6 +12,7 @@ package example
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 
@@ -30,5 +31,5 @@ func HandleExampleTask(ctx context.Context, t *task.Task) error {
 	}
 	//逻辑处理start...
 	log.Printf("print user info: user_id=%d", p.UserID)
-	return nil
+	return errors.New("this is a test")
 }
