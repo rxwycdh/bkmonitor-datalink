@@ -104,17 +104,36 @@ func NewPeriodicTaskSchedulerService() error {
 	if err != nil {
 		return err
 	}
-	for name, cronSpec := range internal.RegisterPeriodicTaskCronSpec {
+	// init periodic task
+	internal.InitPeriodicTask()
+
+	pt := internal.GetRegisterPeriodicTaskDetail()
+	pt.Range(func(name, detail interface{}) bool {
 		// periodic task retry is 0
 		retryOpt := task.MaxRetry(0)
-		periodicTask := task.NewPeriodicTask(cronSpec, name, nil, retryOpt)
-		// register task to schedule with task id, in order to not repeat
-		entryID, err := scheduler.Register(periodicTask.CronSpec, periodicTask.Task, task.TaskID(name))
+		nameStr, ok := name.(string)
+		if !ok {
+			logger.Errorf("task: %v not string", name)
+			return false
+		}
+		d, ok := detail.(map[string]interface{})
+		if !ok {
+			logger.Errorf("task: %s value not map[string]interface, value: %v", nameStr, detail)
+			return false
+		}
+		cronSpec, ok := d["cronSpec"].(string)
+		if !ok {
+			logger.Errorf("task: %s value: %v, cronSpec not string", nameStr, detail)
+			return false
+		}
+		periodicTask := task.NewPeriodicTask(cronSpec, nameStr, nil, retryOpt)
+		entryID, err := scheduler.Register(periodicTask.CronSpec, periodicTask.Task, task.TaskID(nameStr))
 		if err != nil {
 			logger.Errorf("register task error, kind: %s, entry id: %d", periodicTask.Task.Kind, entryID)
-			return err
+			return false
 		}
-	}
+		return true
+	})
 
 	if err := scheduler.Run(); err != nil {
 		logger.Errorf("start scheduler error, %v", err)

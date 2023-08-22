@@ -10,6 +10,8 @@
 package internal
 
 import (
+	"sync"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/example"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/metadata/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/processor"
@@ -25,6 +27,42 @@ var RegisterPeriodicTaskHandlerFunc = map[string]processor.HandlerFunc{
 	"periodic:metadata:refresh_ts_metric": task.RefreshTimeSeriesMetric,
 }
 
-var RegisterPeriodicTaskCronSpec = map[string]string{
-	"periodic:metadata:refresh_ts_metric": "*/3 * * * *",
+var RegisterPeriodicTask = map[string]string{
+	"periodic:metadata:refresh_ts_metric": "*/1 * * * *",
+}
+
+type RegisterPeriodicTaskDetail struct {
+	*sync.Map
+}
+
+func NewRegisterPeriodicTaskDetail() *RegisterPeriodicTaskDetail {
+	return &RegisterPeriodicTaskDetail{
+		Map: &sync.Map{},
+	}
+}
+
+var (
+	registerPeriodicTaskDetail = NewRegisterPeriodicTaskDetail()
+)
+
+// GetRegisterPeriodicTaskDetail get register task desc
+func GetRegisterPeriodicTaskDetail() *RegisterPeriodicTaskDetail {
+	return registerPeriodicTaskDetail
+}
+
+// AddConstantPeriodicTask add hard code task config
+func (pt *RegisterPeriodicTaskDetail) AddConstantPeriodicTask() {
+	// based on redis data
+	for name, cronSpec := range RegisterPeriodicTask {
+		if _, ok := pt.Load(name); !ok {
+			pt.Store(name, map[string]interface{}{"cronSpec": cronSpec, "enable": true})
+		}
+	}
+}
+
+func InitPeriodicTask() {
+	pt := NewRegisterPeriodicTaskDetail()
+	// TODO: from redis init data
+	pt.AddConstantPeriodicTask()
+	registerPeriodicTaskDetail = pt
 }
