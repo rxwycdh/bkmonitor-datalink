@@ -28,7 +28,7 @@ var RegisterPeriodicTaskHandlerFunc = map[string]processor.HandlerFunc{
 }
 
 var RegisterPeriodicTask = map[string]string{
-	"periodic:metadata:refresh_ts_metric": "*/1 * * * *",
+	"periodic:metadata:refresh_ts_metric": "*/2 * * * *",
 }
 
 type RegisterPeriodicTaskDetail struct {
