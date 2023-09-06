@@ -142,3 +142,8 @@ func NewPeriodicTaskSchedulerService() error {
 
 	return nil
 }
+
+// NewController new a controller
+func NewController() error {
+	return nil
+}

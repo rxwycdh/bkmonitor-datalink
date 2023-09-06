@@ -35,17 +35,13 @@ func init() {
 	viper.SetDefault(serviceWorkerListenPath, "127.0.0.1")
 	viper.SetDefault(serviceWorkerPortPath, 10212)
 	// add subcommand
-	rootCmd.AddCommand(taskCmd)
-}
-
-func init() {
 	rootCmd.AddCommand(workerCmd)
 }
 
 var workerCmd = &cobra.Command{
 	Use:   "worker",
 	Short: "bk monitor workers",
-	Long:  "worker module for blueking monitor",
+	Long:  "worker module for blueking monitor worker",
 	Run:   startWroker,
 }
 
@@ -88,7 +84,7 @@ func startWroker(cmd *cobra.Command, args []string) {
 			defer cancel()
 			workerSvr.Shutdown()
 			if err := srv.Shutdown(ctx); err != nil {
-				logger.Fatalf("shutdown service error : %s", err)
+				logger.Fatalf("shutdown worker service error : %s", err)
 			}
 			logger.Warn("worker service exit by syscall SIGQUIT, SIGTERM or SIGINT")
 			return
