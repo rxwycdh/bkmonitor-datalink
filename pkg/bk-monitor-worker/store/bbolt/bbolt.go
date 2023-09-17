@@ -111,6 +111,8 @@ func (c *Instance) Open() error {
 	}
 
 	c.DB = db
+	// 提高数据库写入性能
+	c.DB.NoFreelistSync = true
 	// set db noSync
 	c.DB.NoSync = !viper.GetBool(BboltDefaultSyncPath)
 
