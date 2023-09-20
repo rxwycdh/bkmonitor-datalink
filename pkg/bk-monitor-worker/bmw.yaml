@@ -51,3 +51,13 @@ metric_dimension:
   metric_dimension_key_prefix: "bkmonitor:metric_dimensions_"
   max_metrics_fetch_step: 500
   time_series_metric_expired_days: 30
+aes:
+  key: ""
+test:
+  database:
+    type: mysql
+    host: "127.0.0.1"
+    port: 3306
+    user: root
+    password: "123456"
+    db_name: "testdb"

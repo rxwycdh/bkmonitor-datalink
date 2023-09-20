@@ -11,11 +11,17 @@ package task
 
 import (
 	"context"
+	"sync"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/metadata/models/customreport"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/store/mysql"
 	t "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
+)
+
+const (
+	// Goroutine数限制
+	goroutineLimit = 10
 )
 
 // RefreshTimeSeriesMetric : update ts metrics from redis
@@ -28,7 +34,7 @@ func RefreshTimeSeriesMetric(ctx context.Context, t *t.Task) error {
 	// funcName := runtimex.GetFuncName()
 	dbSession := mysql.GetDBSession()
 	qs := customreport.NewTimeSeriesGroupQuerySet(dbSession.DB)
-	qs = qs.IsEnableEq(false).IsDeleteEq(false)
+	qs = qs.IsEnableEq(true).IsDeleteEq(false)
 	// 过滤满足条件的记录
 	var tsGroupList []customreport.TimeSeriesGroup
 	if err := qs.All(&tsGroupList); err != nil {
@@ -43,6 +49,48 @@ func RefreshTimeSeriesMetric(ctx context.Context, t *t.Task) error {
 			logger.Infof("time_series_group: [%s] metric update from redis success", ts.TableID)
 		}
 	}
+
+	return nil
+}
+
+// RefreshEventDimension : update event dimension from es
+func RefreshEventDimension(ctx context.Context, t *t.Task) error {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Errorf("Runtime panic caught: %v\n", err)
+		}
+	}()
+
+	dbSession := mysql.GetDBSession()
+
+	qs := customreport.NewEventGroupQuerySet(dbSession.DB)
+	// 过滤满足条件的记录
+	qs = qs.IsEnableEq(true).IsDeleteEq(false)
+	var eventGroupList []customreport.EventGroup
+	if err := qs.All(&eventGroupList); err != nil {
+		logger.Errorf("find event group record error, %v", err)
+		return err
+	}
+	wg := sync.WaitGroup{}
+	ch := make(chan bool, goroutineLimit)
+	wg.Add(len(eventGroupList))
+	for _, eg := range eventGroupList {
+		ch <- true
+		go func(eg customreport.EventGroup, wg *sync.WaitGroup, ch chan bool) {
+			defer func() {
+				<-ch
+				wg.Done()
+			}()
+
+			if err := eg.UpdateEventDimensionsFromES(ctx); err != nil {
+				logger.Errorf("event_group: [%s] try to update event dimension from es failed, %v", eg.TableID, err)
+			} else {
+				logger.Infof("event_group: [%s] event dimension update from es success", eg.TableID)
+			}
+		}(eg, &wg, ch)
+
+	}
+	wg.Wait()
 
 	return nil
 }

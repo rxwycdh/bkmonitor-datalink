@@ -3,8 +3,14 @@ module github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker
 go 1.19
 
 require (
+	github.com/agiledragon/gomonkey/v2 v2.10.1
 	github.com/alicebob/miniredis v2.5.0+incompatible
+	github.com/bytedance/sonic v1.9.1
 	github.com/deckarep/golang-set v1.8.0
+	github.com/docker/docker v24.0.6+incompatible
+	github.com/elastic/go-elasticsearch/v5 v5.6.1
+	github.com/elastic/go-elasticsearch/v6 v6.8.10
+	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis/v8 v8.11.5
@@ -12,6 +18,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/hashicorp/consul/api v1.20.0
 	github.com/jinzhu/gorm v1.9.16
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cast v1.5.1
@@ -27,7 +34,6 @@ require (
 	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -77,13 +83,14 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gotest.tools/v3 v3.5.0 // indirect
 )
 
 require (

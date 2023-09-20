@@ -7,32 +7,27 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package models
+package customreport
 
-const (
-	// ResultTableLabelOther
-	ResultTableLabelOther = "other"
-	// ResultTableFieldTagMetric 指标字段
-	ResultTableFieldTagMetric = "metric"
-	// ResultTableFieldTypeFloat float type
-	ResultTableFieldTypeFloat = "float"
-	// ResultTableFieldTypeString string type
-	ResultTableFieldTypeString = "string"
-	// ResultTableFieldTagDimension dimension
-	ResultTableFieldTagDimension = "dimension"
-
-	// EventTargetDimensionName target维度
-	EventTargetDimensionName = "target"
+import (
+	"github.com/stretchr/testify/assert"
+	"reflect"
+	"testing"
 )
 
-// ClusterStorageType
-const (
-	StorageTypeInfluxdb = "influxdb"
-	StorageTypeKafka    = "kafka"
-	StorageTypeES       = "elasticsearch"
-	StorageTypeVM       = "victoria_metrics"
-)
+func TestDimensions(t *testing.T) {
+	var dimensionObj = []string{"d1", "d2", "d3", "d4"}
+	event := &Event{
+		EventID:       123,
+		EventGroupID:  1,
+		EventName:     "test_event",
+		DimensionList: `["d1","d2","d3","d4"]`,
+	}
 
-const (
-	ESQueryMaxSize = 10000
-)
+	assert.True(t, reflect.DeepEqual(dimensionObj, event.GetDimensionList()))
+
+	dimensionObj = dimensionObj[:1]
+	err := event.SetDimensionList(dimensionObj)
+	assert.Nil(t, err)
+	assert.True(t, reflect.DeepEqual(dimensionObj, event.GetDimensionList()))
+}

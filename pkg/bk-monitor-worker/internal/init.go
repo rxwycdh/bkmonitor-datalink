@@ -24,11 +24,13 @@ var RegisterTaskHandleFunc = map[string]processor.HandlerFunc{
 
 // RegisterPeriodicTaskHandlerFunc periodic task map
 var RegisterPeriodicTaskHandlerFunc = map[string]processor.HandlerFunc{
-	"periodic:metadata:refresh_ts_metric": task.RefreshTimeSeriesMetric,
+	"periodic:metadata:refresh_ts_metric":       task.RefreshTimeSeriesMetric,
+	"periodic:metadata:refresh_event_dimension": task.RefreshEventDimension,
 }
 
 var RegisterPeriodicTask = map[string]string{
-	"periodic:metadata:refresh_ts_metric": "*/2 * * * *",
+	"periodic:metadata:refresh_ts_metric":       "*/2 * * * *",
+	"periodic:metadata:refresh_event_dimension": "*/3 * * * *",
 }
 
 type RegisterPeriodicTaskDetail struct {

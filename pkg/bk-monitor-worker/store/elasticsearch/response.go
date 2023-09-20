@@ -7,32 +7,30 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package models
+package elasticsearch
 
-const (
-	// ResultTableLabelOther
-	ResultTableLabelOther = "other"
-	// ResultTableFieldTagMetric 指标字段
-	ResultTableFieldTagMetric = "metric"
-	// ResultTableFieldTypeFloat float type
-	ResultTableFieldTypeFloat = "float"
-	// ResultTableFieldTypeString string type
-	ResultTableFieldTypeString = "string"
-	// ResultTableFieldTagDimension dimension
-	ResultTableFieldTagDimension = "dimension"
-
-	// EventTargetDimensionName target维度
-	EventTargetDimensionName = "target"
+import (
+	"io"
+	"net/http"
 )
 
-// ClusterStorageType
-const (
-	StorageTypeInfluxdb = "influxdb"
-	StorageTypeKafka    = "kafka"
-	StorageTypeES       = "elasticsearch"
-	StorageTypeVM       = "victoria_metrics"
-)
+// Response :
+type Response struct {
+	StatusCode int
+	Header     http.Header
+	Body       io.ReadCloser
+}
 
-const (
-	ESQueryMaxSize = 10000
-)
+// IsError :
+func (r *Response) IsError() bool {
+	return r.StatusCode > 299
+}
+
+// IsSysError :
+func (r *Response) IsSysError() bool {
+	return r.StatusCode > 499
+}
+
+func (r *Response) Close() error {
+	return r.Body.Close()
+}
