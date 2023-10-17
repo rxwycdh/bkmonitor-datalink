@@ -66,7 +66,7 @@ func initApmVariables() {
 	/*
 	   Metric Config
 	*/
-	MetricEnabled = GetValue("metrics.enabled", false)
+	MetricEnabled = GetValue("taskConfig.apmPreCalculate.metrics.enabled", false)
 	ProfileEnabled = GetValue("taskConfig.apmPreCalculate.metrics.profile.enabled", false)
 	ProfileHost = GetValue("taskConfig.apmPreCalculate.metrics.profile.host", "")
 	MetricReportHost = GetValue("taskConfig.apmPreCalculate.metrics.reportHost", "")
