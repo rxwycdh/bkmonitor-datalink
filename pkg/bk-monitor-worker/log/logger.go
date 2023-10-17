@@ -7,17 +7,20 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package broker
+package log
 
 import (
-	"fmt"
-	"strings"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
-// ValidateQueueName validate queue name
-func ValidateQueueName(queueName string) error {
-	if len(strings.TrimSpace(queueName)) == 0 {
-		return fmt.Errorf("queue name is null")
-	}
-	return nil
+func InitLogger() {
+	logger.SetOptions(logger.Options{
+		Stdout:     config.LoggerEnabledStdout,
+		Level:      config.LoggerLevel,
+		Filename:   config.LoggerStdoutPath,
+		MaxSize:    config.LoggerStdoutFileMaxSize,
+		MaxAge:     config.LoggerStdoutFileMaxAge,
+		MaxBackups: config.LoggerStdoutFileMaxBackups,
+	})
 }

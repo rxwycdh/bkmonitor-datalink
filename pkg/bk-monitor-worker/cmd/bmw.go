@@ -11,11 +11,10 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/spf13/cobra"
-
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
+	"github.com/spf13/cobra"
+	_ "go.uber.org/automaxprocs"
+	"os"
 )
 
 var rootCmd = &cobra.Command{
@@ -34,6 +33,6 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(
-		&config.ConfigPath, "config", "", "path of project service config files",
+		&config.FilePath, "config", "./bmw.yaml", "path of project service config files",
 	)
 }

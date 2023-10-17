@@ -1,0 +1,18 @@
+connections:
+  - dataId: 999
+    bkBizId: 2
+    bkBizName: 测试业务名称
+    appId: 1
+    appName: 测试应用A
+    kafkaHost: 127.0.0.1:9092
+    kafkaUsername:
+    kafkaPassword:
+    kafkaTopic: pre_calculate_test_a
+    traceEsIndexName: 2_bkapm_trace_bkmonitor_production*
+    traceEsHost: http://127.0.0.1:9200
+    traceEsUsername: elastic
+    traceEsPassword: 123456
+    saveEsIndexName: pre_calculate_test_a
+    saveEsHost: http://127.0.0.1:9200
+    saveEsUsername: elastic
+    saveEsPassword: 123456

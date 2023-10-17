@@ -11,35 +11,14 @@ package consul
 
 import (
 	"context"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"time"
-
-	"github.com/hashicorp/consul/api"
-	"github.com/spf13/viper"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/store"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	consulUtils "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/register/consul"
+	"github.com/hashicorp/consul/api"
 )
-
-const (
-	consulAddressPath    = "store.consul.address"
-	consulPortPath       = "store.consul.port"
-	consulSrvNamePath    = "store.consul.srv_name"
-	consulConsulAddrPath = "store.consul.consul_addr"
-	consulTagPath        = "store.consul.tag"
-	consulTTLPath        = "store.consul.ttl"
-	consulTaskPath       = "store.consul.task"
-)
-
-func init() {
-	viper.SetDefault(consulAddressPath, "")
-	viper.SetDefault(consulPortPath, 8500)
-	viper.SetDefault(consulSrvNamePath, "bmw")
-	viper.SetDefault(consulConsulAddrPath, "127.0.0.1:8500")
-	viper.SetDefault(consulTagPath, []string{"bmw"})
-	viper.SetDefault(consulTTLPath, "")
-	viper.SetDefault(consulTaskPath, "")
-}
 
 type Instance struct {
 	ctx       context.Context
@@ -54,12 +33,12 @@ func NewInstance(ctx context.Context) (*Instance, error) {
 	client, err := consulUtils.NewConsulInstance(
 		ctx,
 		consulUtils.InstanceOptions{
-			SrvName:    viper.GetString(consulSrvNamePath),
-			Addr:       viper.GetString(consulAddressPath),
-			Port:       viper.GetInt(consulPortPath),
-			ConsulAddr: viper.GetString(consulConsulAddrPath),
-			Tags:       viper.GetStringSlice(consulTagPath),
-			TTL:        viper.GetString(consulTTLPath),
+			SrvName:    config.StorageConsulSrvName,
+			Addr:       config.StorageConsulAddress,
+			Port:       config.StorageConsulPort,
+			ConsulAddr: config.StorageConsulAddr,
+			Tags:       config.StorageConsulTag,
+			TTL:        config.StorageConsulTll,
 		},
 	)
 	if err != nil {
@@ -68,7 +47,7 @@ func NewInstance(ctx context.Context) (*Instance, error) {
 	}
 	// new a kv client
 	conf := api.DefaultConfig()
-	conf.Address = viper.GetString(consulAddressPath)
+	conf.Address = config.StorageConsulAddress
 	apiClient, err := api.NewClient(conf)
 	if err != nil {
 		logger.Errorf("new consul api client error, %v", err)
@@ -110,6 +89,11 @@ func (c *Instance) Get(key string) ([]byte, error) {
 		logger.Errorf("get consul key: %s error, %v", key, err)
 		return nil, err
 	}
+	if kvPair == nil {
+		// Key not exist
+		return nil, nil
+	}
+
 	return kvPair.Value, nil
 }
 

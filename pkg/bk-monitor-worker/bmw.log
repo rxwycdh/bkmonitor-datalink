@@ -1,0 +1,13 @@
+2023-09-30 15:25:03.506	ERROR	redis/redis.go:37	get redis instance error, dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 15:28:08.060	ERROR	redis/redis.go:37	get redis instance error, dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 15:52:02.655	FATAL	cmd/task.go:67	start periodic task scheduler error: dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 15:52:23.556	FATAL	cmd/task.go:67	start periodic task scheduler error: dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 15:53:58.531	FATAL	cmd/task.go:67	start periodic task scheduler error: dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 15:54:14.168	FATAL	cmd/task.go:67	start periodic task scheduler error: dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 15:54:25.171	FATAL	cmd/task.go:67	start periodic task scheduler error: dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 16:38:51.226	ERROR	service/service.go:82	start a worker service error, dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 16:38:51.227	FATAL	cmd/worker.go:62	start worker error, dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 16:38:59.097	INFO	cmd/task.go:81	Task module started.
+2023-09-30 16:38:59.165	FATAL	cmd/task.go:64	start periodic task scheduler error: dial tcp 127.0.0.1:6379: connect: connection refused
+2023-09-30 16:39:15.925	INFO	cmd/task.go:81	Task module started.
+2023-09-30 16:39:15.994	FATAL	cmd/task.go:64	start periodic task scheduler error: dial tcp 127.0.0.1:6379: connect: connection refused

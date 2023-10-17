@@ -7,14 +7,14 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package logging
+package log
 
 import (
 	"bufio"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"os"
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
@@ -26,7 +26,7 @@ func TestLogger(t *testing.T) {
 	infoMsg := "this is a info test"
 	logger.Info(infoMsg)
 
-	logFile := viper.GetString(logFileNamePath)
+	logFile := config.LoggerStdoutPath
 	// 查询日志
 	file, err := os.Open(logFile)
 	if err != nil {

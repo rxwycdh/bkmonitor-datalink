@@ -11,12 +11,9 @@ package common
 
 import "time"
 
-// 默认队列名
 const (
-	// 默认前缀
-	DefaultQueuePrefix = "bmw"
-	// 默认队列名
-	DefaultQueueName = "bmw:default"
+	// DefaultQueueName 默认队列名
+	DefaultQueueName = "default"
 )
 
 // DefaultQueue is the redis key for the default queue.
