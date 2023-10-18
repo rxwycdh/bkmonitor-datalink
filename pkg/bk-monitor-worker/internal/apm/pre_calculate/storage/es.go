@@ -121,7 +121,7 @@ type esStorage struct {
 func (e *esStorage) Save(data EsStorageData) error {
 
 	buf := bytes.NewBuffer(data.Value)
-	req := esapi.IndexRequest{Index: e.indexName, DocumentID: data.DocumentId, Body: buf}
+	req := esapi.IndexRequest{Index: e.getSaveIndexName(e.indexName), DocumentID: data.DocumentId, Body: buf}
 	res, err := req.Do(context.Background(), e.client)
 	defer func(Body io.ReadCloser) {
 		err = Body.Close()
@@ -149,7 +149,7 @@ func (e *esStorage) SaveBatch(items []EsStorageData) error {
 		buf.Write(data)
 	}
 
-	req := esapi.BulkRequest{Index: e.indexName, Body: &buf}
+	req := esapi.BulkRequest{Index: e.getSaveIndexName(e.indexName), Body: &buf}
 	response, err := req.Do(context.Background(), e.client)
 	if err != nil {
 		return err
@@ -179,7 +179,7 @@ func (e *esStorage) Query(data any) (any, error) {
 
 	res, err := e.client.Search(
 		e.client.Search.WithContext(context.Background()),
-		e.client.Search.WithIndex(e.getSearchIndexName(e.indexName)),
+		e.client.Search.WithIndex(e.indexName),
 		e.client.Search.WithBody(&buf),
 		e.client.Search.WithTrackTotalHits(true),
 	)
@@ -201,7 +201,7 @@ func (e *esStorage) Query(data any) (any, error) {
 	return body.Converter(res.Body)
 }
 
-func (e *esStorage) getSearchIndexName(indexName string) string {
+func (e *esStorage) getSaveIndexName(indexName string) string {
 	return fmt.Sprintf("write_%s_%s", time.Now().Format("20060102"), indexName)
 }
 
