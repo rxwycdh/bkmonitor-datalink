@@ -12,6 +12,9 @@ package elasticsearch
 import (
 	"context"
 	"fmt"
+	"io"
+	"strings"
+
 	es5 "github.com/elastic/go-elasticsearch/v5"
 	esapi5 "github.com/elastic/go-elasticsearch/v5/esapi"
 	es6 "github.com/elastic/go-elasticsearch/v6"
@@ -19,8 +22,6 @@ import (
 	es7 "github.com/elastic/go-elasticsearch/v7"
 	esapi7 "github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/pkg/errors"
-	"io"
-	"strings"
 )
 
 type Elasticsearch struct {

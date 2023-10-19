@@ -12,16 +12,17 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/daemon"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/spf13/cobra"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/log"
 	service "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/daemon"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"github.com/spf13/cobra"
 )
 
 func init() {

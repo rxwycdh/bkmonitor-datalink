@@ -11,16 +11,17 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
-	service "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/http"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/spf13/cobra"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
+	service "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/http"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/log"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"github.com/spf13/cobra"
 )
 
 func init() {

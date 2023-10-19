@@ -14,19 +14,20 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	"math"
 	"sync"
 	"time"
 
+	redis "github.com/go-redis/redis/v8"
+	"github.com/spf13/cast"
+
 	common "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/common"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	task "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/errors"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/timex"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	redisUtils "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/register/redis"
-	"github.com/go-redis/redis/v8"
-	"github.com/spf13/cast"
 )
 
 // set ttl
