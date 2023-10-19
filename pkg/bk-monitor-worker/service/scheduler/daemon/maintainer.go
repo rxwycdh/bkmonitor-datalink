@@ -131,7 +131,7 @@ func (r *RunMaintainer) listenRunningState(taskUniId string, errorReceiveChan ch
 			v, _ := r.runningInstance.Load(taskUniId)
 			rB := v.(*runningBinding)
 			define, _ := r.methodOperatorMapping[rB.TaskBinding.Kind]
-			go define.Start(rB.baseCtx, errorReceiveChan, rB.Task.Payload)
+			go define.Start(rB.baseCtx, errorReceiveChan, rB.SerializerTask.Payload)
 			logger.Infof("[FAILED RETRY] Task: %s retry performed", taskUniId)
 			retryTicker = &time.Ticker{}
 		case <-baseCtx.Done():

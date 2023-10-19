@@ -24,6 +24,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/grafana/pyroscope-go v1.0.4
 	github.com/hashicorp/consul/api v1.20.0
+	github.com/influxdata/influxdb1-client v0.0.0-20220302092344-a9ab5670611c
 	github.com/jinzhu/gorm v1.9.16
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1

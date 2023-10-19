@@ -15,7 +15,7 @@ import (
 
 type TaskBinding struct {
 	UniId string
-	task.Task
+	task.SerializerTask
 }
 
 type WorkerBinding struct {
@@ -27,7 +27,7 @@ type Binding struct {
 	redisClient redis.UniversalClient
 }
 
-func (b *Binding) addTask(t task.Task) {
+func (b *Binding) addTask(t task.SerializerTask) {
 	workerInfo, err := computeWorker(t)
 	if err != nil {
 		logger.Errorf("handle add task failed. error: %s", err)
@@ -36,7 +36,7 @@ func (b *Binding) addTask(t task.Task) {
 	taskUniId := ComputeTaskUniId(t)
 
 	if err = b.addBinding(
-		TaskBinding{UniId: taskUniId, Task: t},
+		TaskBinding{UniId: taskUniId, SerializerTask: t},
 		WorkerBinding{WorkerId: workerInfo.Id, WorkerInfo: workerInfo},
 	); err != nil {
 		logger.Errorf("add binding failed. %s", err)
@@ -44,7 +44,7 @@ func (b *Binding) addTask(t task.Task) {
 	}
 }
 
-func (b *Binding) addTaskWithUniId(taskUniId string, t task.Task) {
+func (b *Binding) addTaskWithUniId(taskUniId string, t task.SerializerTask) {
 	workerInfo, err := computeWorker(t)
 	if err != nil {
 		logger.Errorf("handle add task failed. error: %s", err)
@@ -52,7 +52,7 @@ func (b *Binding) addTaskWithUniId(taskUniId string, t task.Task) {
 	}
 
 	if err = b.addBinding(
-		TaskBinding{UniId: taskUniId, Task: t},
+		TaskBinding{UniId: taskUniId, SerializerTask: t},
 		WorkerBinding{WorkerId: workerInfo.Id, WorkerInfo: workerInfo},
 	); err != nil {
 		logger.Errorf("add binding failed. %s", err)
@@ -142,7 +142,7 @@ func (b *Binding) deleteWorkerBinding(workerId string) error {
 
 	logger.Infof("[BINDING DELETE] delete worker binding key: %s", common.DaemonBindingWorker(workerId))
 	for _, taskBinding := range bindingTasks {
-		b.addTask(taskBinding.Task)
+		b.addTask(taskBinding.SerializerTask)
 	}
 
 	return nil

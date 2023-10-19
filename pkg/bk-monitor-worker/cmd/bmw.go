@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	_ "go.uber.org/automaxprocs"
 	"os"
 )
@@ -35,4 +36,12 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(
 		&config.FilePath, "config", "./bmw.yaml", "path of project service config files",
 	)
+}
+
+func addFlag(configLoc string, flagName string, addVarFunc func()) {
+	addVarFunc()
+	err := viper.BindPFlag(configLoc, rootCmd.PersistentFlags().Lookup(flagName))
+	if err != nil {
+		panic(fmt.Errorf("lookup var failed: %s", flagName))
+	}
 }

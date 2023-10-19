@@ -58,7 +58,7 @@ func (d *DefaultNumerator) start() {
 					logger.Errorf("Numerator delete binding failed, error: %s", err)
 				}
 			})
-			linq.From(exceptAddTasks).ForEach(func(i interface{}) { GetBinding().addTask(i.(task.Task)) })
+			linq.From(exceptAddTasks).ForEach(func(i interface{}) { GetBinding().addTask(i.(task.SerializerTask)) })
 			linq.From(invalidWorkerIdBindings).ForEach(func(i interface{}) {
 				if err = GetBinding().deleteWorkerBinding(i.(string)); err != nil {
 					logger.Errorf("Numerator delete worker binding failed, error: %s", err)
@@ -75,7 +75,7 @@ func (d *DefaultNumerator) start() {
 func (d *DefaultNumerator) checkWorkerCorrect(
 	workers []service.WorkerInfo,
 	workerTaskMapping map[string][]string,
-	taskUniIdMapping map[string]task.Task,
+	taskUniIdMapping map[string]task.SerializerTask,
 ) []string {
 	var res []string
 	taskUniIds := maps.Keys(taskUniIdMapping)
@@ -107,12 +107,12 @@ func (d *DefaultNumerator) checkTasksValid(workerTasks []string, taskUniIds []st
 }
 
 func (d *DefaultNumerator) checkTaskCorrect(
-	taskUniMapping map[string]task.Task,
+	taskUniMapping map[string]task.SerializerTask,
 	taskWorkerMapping map[string]string,
 	workers []service.WorkerInfo,
-) ([]task.Task, []string) {
+) ([]task.SerializerTask, []string) {
 	var invalidWorkerIds []string
-	var expectAddTasks []task.Task
+	var expectAddTasks []task.SerializerTask
 	var workerIds []string
 	linq.From(workers).Select(func(i interface{}) interface{} { return i.(service.WorkerInfo).Id }).ToSlice(&workerIds)
 
@@ -159,15 +159,15 @@ func (d *DefaultNumerator) listWorker() ([]service.WorkerInfo, error) {
 	return res, nil
 }
 
-func (d *DefaultNumerator) listTask() (map[string]task.Task, error) {
-	res := make(map[string]task.Task)
+func (d *DefaultNumerator) listTask() (map[string]task.SerializerTask, error) {
+	res := make(map[string]task.SerializerTask)
 	tasks, err := d.redisClient.SMembers(d.ctx, common.DaemonTaskKey()).Result()
 	if err != nil {
 		return res, fmt.Errorf("failed to get list of tasks with key: %s, error: %s", common.DaemonTaskKey(), err)
 	}
 
 	for _, item := range tasks {
-		var instance task.Task
+		var instance task.SerializerTask
 		if err = json.Unmarshal([]byte(item), &instance); err != nil {
 			return res, fmt.Errorf("failed to unmarshal value(%s) to Task on %s. error: %s", item, common.DaemonTaskKey(), err)
 		}
@@ -177,7 +177,7 @@ func (d *DefaultNumerator) listTask() (map[string]task.Task, error) {
 	return res, nil
 }
 
-func (d *DefaultNumerator) listBindingMapping(workers []service.WorkerInfo, taskUniIdMapping map[string]task.Task) (map[string][]string, map[string]string, error) {
+func (d *DefaultNumerator) listBindingMapping(workers []service.WorkerInfo, taskUniIdMapping map[string]task.SerializerTask) (map[string][]string, map[string]string, error) {
 	workerTaskMapping := make(map[string][]string, len(workers))
 	taskWorkerMapping := make(map[string]string, len(taskUniIdMapping))
 

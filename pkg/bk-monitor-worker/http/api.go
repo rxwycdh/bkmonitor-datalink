@@ -43,7 +43,7 @@ type taskParams struct {
 }
 
 type daemonTaskItem struct {
-	task.Task
+	task.SerializerTask
 	UniId string `json:"uni_id"`
 }
 
@@ -162,7 +162,11 @@ func pushPeriodicTaskToRedis(c *gin.Context, t *task.Task) error {
 func enqueueDaemonTask(t *task.Task) error {
 	client := rdb.GetRDB().Client()
 
-	data, err := json.Marshal(t)
+	serializerTask, err := task.NewSerializerTask(*t)
+	if err != nil {
+		return err
+	}
+	data, err := json.Marshal(serializerTask)
 	if err != nil {
 		return err
 	}
@@ -186,7 +190,7 @@ func RemoveTask(c *gin.Context) {
 			return
 		}
 		for _, i := range tasks {
-			var item task.Task
+			var item task.SerializerTask
 			if err = json.Unmarshal([]byte(i), &item); err != nil {
 				ServerErrResponse(c, fmt.Sprintf("failed to parse key: %v to Task on value: %s", common.DaemonTaskKey(), i), err)
 				return
@@ -219,12 +223,12 @@ func ListTask(c *gin.Context) {
 		}
 		var res []daemonTaskItem
 		for _, i := range tasks {
-			var item task.Task
+			var item task.SerializerTask
 			if err = json.Unmarshal([]byte(i), &item); err != nil {
 				ServerErrResponse(c, fmt.Sprintf("failed to parse key: %v to Task on value: %s", common.DaemonTaskKey(), i), err)
 				return
 			}
-			res = append(res, daemonTaskItem{Task: item, UniId: daemon.ComputeTaskUniId(item)})
+			res = append(res, daemonTaskItem{SerializerTask: item, UniId: daemon.ComputeTaskUniId(item)})
 		}
 		Response(c, &gin.H{"data": res})
 	default:

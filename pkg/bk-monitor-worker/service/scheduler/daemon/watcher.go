@@ -20,7 +20,7 @@ type watchWorkerMark struct {
 
 type watchTaskMark struct {
 	taskUniId string
-	task      task.Task
+	task      task.SerializerTask
 }
 
 type DefaultWatcherOptions struct {
@@ -159,12 +159,11 @@ func (d *DefaultWatcher) watchTask() {
 	}
 }
 
-func (d *DefaultWatcher) toTask(taskStr string) (task.Task, error) {
-	var res task.Task
+func (d *DefaultWatcher) toTask(taskStr string) (task.SerializerTask, error) {
+	var res task.SerializerTask
 	if err := json.Unmarshal([]byte(taskStr), &res); err != nil {
 		return res, err
 	}
-
 	return res, nil
 }
 

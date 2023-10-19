@@ -11,6 +11,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/daemon"
 	"os"
@@ -26,21 +27,23 @@ import (
 func init() {
 	// add subcommand
 	rootCmd.AddCommand(workerCmd)
-	rootCmd.PersistentFlags().StringSliceVar(
-		&config.WorkerQueues, "queues", config.WorkerQueues, "Specify the queues that worker listens to.",
-	)
+	addFlag("worker.queues", "queues", func() {
+		rootCmd.PersistentFlags().StringSliceVar(
+			&config.WorkerQueues, "queues", config.WorkerQueues, "Specify the queues that worker listens to.",
+		)
+	})
 }
 
 var workerCmd = &cobra.Command{
 	Use:   "worker",
 	Short: "bk monitor workers",
 	Long:  "worker module for blueking monitor worker",
-	Run:   startWroker,
+	Run:   startWorker,
 }
 
 // start 启动服务
-func startWroker(cmd *cobra.Command, args []string) {
-
+func startWorker(cmd *cobra.Command, args []string) {
+	fmt.Printf("%v", config.WorkerQueues)
 	config.InitConfig()
 	log.InitLogger()
 

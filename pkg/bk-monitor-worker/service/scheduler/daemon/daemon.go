@@ -83,26 +83,18 @@ func NewDaemonTaskScheduler(ctx context.Context) *TaskScheduler {
 	}
 }
 
-func ComputeTaskUniId(task task.Task) string {
+func ComputeTaskUniId(task task.SerializerTask) string {
 	// 统一名称+参数视为同一个常驻任务
 	return fmt.Sprintf("%s-%s", task.Kind, hex.EncodeToString(task.Payload))
 }
 
-func computeWorker(t task.Task) (service.WorkerInfo, error) {
+func computeWorker(t task.SerializerTask) (service.WorkerInfo, error) {
 	ctx := context.Background()
 
 	redisClient := rdb.GetRDB().Client()
-	// 获取task是否有指定队列
-	var queueOpt task.Option
-	for _, o := range t.Options {
-		if o.Type() == task.QueueOpt {
-			queueOpt = o
-			break
-		}
-	}
 	var queue string
-	if queueOpt != nil {
-		queue = queueOpt.Value().(string)
+	if t.Options.Queue != "" {
+		queue = t.Options.Queue
 	} else {
 		queue = common.DefaultQueueName
 	}

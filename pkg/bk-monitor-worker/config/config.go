@@ -233,7 +233,6 @@ var (
 )
 
 func GetValue[T any](key string, def T) T {
-
 	if !slices.Contains(keys, strings.ToLower(key)) {
 		return def
 	}
