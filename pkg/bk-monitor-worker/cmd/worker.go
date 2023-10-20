@@ -11,7 +11,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -44,7 +43,7 @@ var workerCmd = &cobra.Command{
 
 // start 启动服务
 func startWorker(cmd *cobra.Command, args []string) {
-	fmt.Printf("%v", config.WorkerQueues)
+
 	config.InitConfig()
 	log.InitLogger()
 
