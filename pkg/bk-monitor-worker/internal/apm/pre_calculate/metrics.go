@@ -45,6 +45,7 @@ type MetricOptions struct {
 	validMetric []*metric
 
 	enabledProfile bool
+	interval       time.Duration
 	profileAddress string
 }
 
@@ -57,6 +58,12 @@ func ReportHost(h string) MetricOption {
 func EnabledMetric(e bool) MetricOption {
 	return func(options *MetricOptions) {
 		options.enabled = e
+	}
+}
+
+func EnabledMetricReportInterval(i int) MetricOption {
+	return func(options *MetricOptions) {
+		options.interval = time.Duration(i) * time.Millisecond
 	}
 }
 
@@ -168,7 +175,7 @@ loop:
 		default:
 			v := len(r.proxy.SaveRequest())
 			postHandle(m, v, dimension, 0)
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(r.metricCollector.interval)
 		}
 	}
 }
@@ -187,7 +194,7 @@ loop:
 		default:
 			v := len(r.notifier.Spans())
 			postHandle(f, v, dimension, 0)
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(r.metricCollector.interval)
 		}
 	}
 }
@@ -213,7 +220,7 @@ loop:
 					postHandle(metric, m.Value, m.Dimension, mIndex)
 				}
 			}
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(r.metricCollector.interval)
 		}
 	}
 }
@@ -317,6 +324,8 @@ loop:
 					postHandle(metric, saveEsCountM[aggsName], dimension, 1)
 				}
 			}
+
+			time.Sleep(r.metricCollector.interval)
 		}
 	}
 }

@@ -31,6 +31,7 @@ var (
 	StorageBloomAutoClean                         int
 
 	MetricEnabled                       bool
+	MetricReportInterval                int
 	ProfileEnabled                      bool
 	ProfileHost                         string
 	MetricReportHost                    string
@@ -76,6 +77,7 @@ func initApmVariables() {
 	   Metric Config
 	*/
 	MetricEnabled = GetValue("taskConfig.apmPreCalculate.metrics.enabled", false)
+	MetricReportInterval = GetValue("taskConfig.apmPreCalculate.metrics.reportInterval", 1000)
 	ProfileEnabled = GetValue("taskConfig.apmPreCalculate.metrics.profile.enabled", false)
 	ProfileHost = GetValue("taskConfig.apmPreCalculate.metrics.profile.host", "")
 	MetricReportHost = GetValue("taskConfig.apmPreCalculate.metrics.reportHost", "")

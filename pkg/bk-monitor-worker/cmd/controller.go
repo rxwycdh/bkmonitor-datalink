@@ -45,7 +45,7 @@ func startController(cmd *cobra.Command, args []string) {
 		Addr:    fmt.Sprintf("%s:%d", config.HttpListenPath, config.HttpListenPort),
 		Handler: r,
 	}
-	logger.Infof("Starting HTTP server at %s%d", config.HttpListenPath, config.HttpListenPort)
+	logger.Infof("Starting HTTP server at %s:%d", config.HttpListenPath, config.HttpListenPort)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

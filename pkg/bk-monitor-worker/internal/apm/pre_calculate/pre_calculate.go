@@ -11,12 +11,14 @@ package pre_calculate
 
 import (
 	"context"
+
+	"go.uber.org/zap"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/notifier"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"go.uber.org/zap"
 )
 
 func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
@@ -68,6 +70,7 @@ func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
 		).
 		WithMetricReport(
 			EnabledMetric(config.MetricEnabled),
+			EnabledMetricReportInterval(config.MetricReportInterval),
 			EnabledProfile(config.ProfileEnabled),
 			ProfileAddress(config.ProfileHost),
 			ReportHost(config.MetricReportHost),
