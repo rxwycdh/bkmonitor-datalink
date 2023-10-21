@@ -13,10 +13,13 @@ import (
 	"context"
 	"crypto/sha512"
 	"encoding/json"
-	"github.com/IBM/sarama"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
-	"github.com/xdg-go/scram"
 	"time"
+
+	"github.com/IBM/sarama"
+	"github.com/xdg-go/scram"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 )
 
 type KafkaConfig struct {
@@ -69,7 +72,8 @@ func (k *kafkaNotifier) Spans() <-chan []window.Span {
 	return k.handler.spans
 }
 
-func (k *kafkaNotifier) Start() {
+func (k *kafkaNotifier) Start(errorReceiveChan chan<- error) {
+	defer runtimex.HandleCrashToChan(errorReceiveChan)
 	logger.Infof("KafkaNotifier started. host: %s topic: %s groupId: %s", k.config.KafkaHost, k.config.KafkaTopic, k.config.KafkaGroupId)
 loop:
 	for {

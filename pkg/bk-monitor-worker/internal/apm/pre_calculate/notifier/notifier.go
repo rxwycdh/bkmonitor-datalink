@@ -18,7 +18,7 @@ import (
 )
 
 type Notifier interface {
-	Start()
+	Start(errorReceiveChan chan<- error)
 	Spans() <-chan []window.Span
 }
 
@@ -76,7 +76,7 @@ func (e emptyNotifier) Spans() <-chan []window.Span {
 	return make(chan []window.Span, 0)
 }
 
-func (e emptyNotifier) Start() {}
+func (e emptyNotifier) Start(_ chan<- error) {}
 
 func newEmptyNotifier() Notifier {
 	once.Do(func() {

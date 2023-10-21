@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	"go.uber.org/zap"
 	"time"
@@ -162,10 +163,10 @@ type Proxy struct {
 	saveRequestChan chan SaveRequest
 }
 
-func (p *Proxy) Run() {
+func (p *Proxy) Run(errorReceiveChan chan<- error) {
 	logger.Infof("StorageProxy started.")
 	for i := 0; i < p.config.workerCount; i++ {
-		go p.ReceiveSaveRequest()
+		go p.ReceiveSaveRequest(errorReceiveChan)
 	}
 }
 
@@ -173,7 +174,8 @@ func (p *Proxy) SaveRequest() chan<- SaveRequest {
 	return p.saveRequestChan
 }
 
-func (p *Proxy) ReceiveSaveRequest() {
+func (p *Proxy) ReceiveSaveRequest(errorReceiveChan chan<- error) {
+	defer runtimex.HandleCrashToChan(errorReceiveChan)
 
 	ticker := time.NewTicker(p.config.saveHoldDuration)
 	esSaveData := make([]EsStorageData, 0, p.config.saveHoldMaxCount)

@@ -11,6 +11,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,6 +37,8 @@ var controllerCmd = &cobra.Command{
 }
 
 func startController(cmd *cobra.Command, args []string) {
+	defer runtimex.HandleCrash()
+
 	config.InitConfig()
 	log.InitLogger()
 

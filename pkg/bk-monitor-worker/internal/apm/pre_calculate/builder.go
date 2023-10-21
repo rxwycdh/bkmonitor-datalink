@@ -80,9 +80,10 @@ type PrecalculateOption struct {
 }
 
 type readySignal struct {
-	ctx    context.Context
-	dataId string
-	config PrecalculateOption
+	ctx              context.Context
+	dataId           string
+	config           PrecalculateOption
+	errorReceiveChan chan<- error
 }
 
 func (p *Precalculate) WithContext(ctx context.Context, cancel context.CancelFunc) Builder {
@@ -163,9 +164,9 @@ loop:
 			} else {
 				var signal readySignal
 				if len(config) == 0 {
-					signal = readySignal{ctx: ctx, dataId: dataId, config: p.defaultConfig}
+					signal = readySignal{ctx: ctx, dataId: dataId, config: p.defaultConfig, errorReceiveChan: errorReceiveChan}
 				} else {
-					signal = readySignal{ctx: ctx, dataId: dataId, config: config[0]}
+					signal = readySignal{ctx: ctx, dataId: dataId, config: config[0], errorReceiveChan: errorReceiveChan}
 				}
 				p.readySignalChan <- signal
 				break loop
@@ -185,7 +186,7 @@ loop:
 		select {
 		case signal := <-p.readySignalChan:
 			apmLogger.Infof("Pre-calculation with dataId: %s was received.", signal.dataId)
-			p.launch(signal.ctx, signal.dataId, signal.config)
+			p.launch(signal.ctx, signal.dataId, signal.config, signal.errorReceiveChan)
 		case <-p.ctx.Done():
 			apmLogger.Info("Precalculate[MAIN] received the stop signal.")
 			break loop
@@ -204,13 +205,13 @@ func (p *Precalculate) Stop(dataId string) {
 	})
 }
 
-func (p *Precalculate) launch(parentCtx context.Context, dataId string, conf PrecalculateOption) {
+func (p *Precalculate) launch(parentCtx context.Context, dataId string, conf PrecalculateOption, errorReceiveChan chan<- error) {
 	ctx, cancel := context.WithCancel(parentCtx)
-	runInstance := RunInstance{dataId: dataId, config: conf, ctx: ctx, cancel: cancel}
+	runInstance := RunInstance{dataId: dataId, config: conf, ctx: ctx, cancel: cancel, errorReceiveChan: errorReceiveChan}
 
 	messageChan := runInstance.startNotifier()
 	saveReqChan := runInstance.startStorageBackend()
-	runInstance.startWindowHandler(messageChan, saveReqChan)
+	runInstance.startWindowHandler(messageChan, saveReqChan, errorReceiveChan)
 
 	runInstance.startMetricReport()
 
@@ -219,8 +220,9 @@ func (p *Precalculate) launch(parentCtx context.Context, dataId string, conf Pre
 }
 
 type RunInstance struct {
-	dataId string
-	config PrecalculateOption
+	dataId           string
+	config           PrecalculateOption
+	errorReceiveChan chan<- error
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -248,17 +250,17 @@ func (p *RunInstance) startNotifier() <-chan []window.Span {
 		)...,
 	)
 	p.notifier = n
-	go n.Start()
+	go n.Start(p.errorReceiveChan)
 	return n.Spans()
 }
 
-func (p *RunInstance) startWindowHandler(messageChan <-chan []window.Span, saveReqChan chan<- storage.SaveRequest) {
+func (p *RunInstance) startWindowHandler(messageChan <-chan []window.Span, saveReqChan chan<- storage.SaveRequest, errorReceiveChan chan<- error) {
 
 	processor := window.NewProcessor(p.dataId, p.proxy, p.config.processorConfig...)
 
 	operator := window.NewDistributiveWindow(p.dataId, p.ctx, processor, saveReqChan, p.config.distributiveWindowConfig...)
 	operation := window.Operation{Operator: operator}
-	operation.Run(messageChan, p.config.runtimeConfig...)
+	operation.Run(messageChan, errorReceiveChan, p.config.runtimeConfig...)
 
 	p.windowHandler = operator
 }
@@ -289,7 +291,7 @@ func (p *RunInstance) startStorageBackend() chan<- storage.SaveRequest {
 		return nil
 	}
 
-	proxy.Run()
+	proxy.Run(p.errorReceiveChan)
 	p.proxy = proxy
 	return proxy.SaveRequest()
 }

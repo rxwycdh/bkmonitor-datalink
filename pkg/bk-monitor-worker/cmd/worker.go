@@ -11,6 +11,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 	"os"
 	"os/signal"
 	"syscall"
@@ -43,6 +44,7 @@ var workerCmd = &cobra.Command{
 
 // start 启动服务
 func startWorker(cmd *cobra.Command, args []string) {
+	defer runtimex.HandleCrash()
 
 	config.InitConfig()
 	log.InitLogger()

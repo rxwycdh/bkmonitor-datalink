@@ -12,6 +12,7 @@ package window
 import (
 	"context"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	"github.com/cespare/xxhash/v2"
 	"go.uber.org/zap"
@@ -131,19 +132,19 @@ func (w *DistributiveWindow) locate(uni string) *distributiveSubWindow {
 	return w.subWindows[a]
 }
 
-func (w *DistributiveWindow) Start(spanChan <-chan []Span, runtimeOpts ...RuntimeConfigOption) {
+func (w *DistributiveWindow) Start(spanChan <-chan []Span, errorReceiveChan chan<- error, runtimeOpts ...RuntimeConfigOption) {
 
 	for ob, _ := range w.observers {
 		ob.assembleRuntimeConfig(runtimeOpts...)
 		for i := 0; i < w.config.concurrentProcessCount; i++ {
-			go ob.handleNotify()
+			go ob.handleNotify(errorReceiveChan)
 		}
 	}
 
-	go w.startWatch()
+	go w.startWatch(errorReceiveChan)
 	w.logger.Infof("DataId: %s created with %d sub-window, %d concurrentProcessCount", w.dataId, len(w.observers), w.config.concurrentProcessCount)
 
-	go w.Handle(spanChan)
+	go w.Handle(spanChan, errorReceiveChan)
 	//for i := 0; i < w.config.messageConcurrentListener; i++ {
 	//	go w.Handle(spanChan)
 	//}
@@ -186,7 +187,9 @@ func (w *DistributiveWindow) ReportMetric() map[OperatorMetricKey][]OperatorMetr
 	return r
 }
 
-func (w *DistributiveWindow) Handle(spanChan <-chan []Span) {
+func (w *DistributiveWindow) Handle(spanChan <-chan []Span, errorReceiveChan chan<- error) {
+	defer runtimex.HandleCrashToChan(errorReceiveChan)
+
 	w.logger.Infof("DistributiveWindow handle started.")
 loop:
 	for {
@@ -211,7 +214,9 @@ func (w *DistributiveWindow) deRegister(o observer) {
 	delete(w.observers, o)
 }
 
-func (w *DistributiveWindow) startWatch() {
+func (w *DistributiveWindow) startWatch(errorReceiveChan chan<- error) {
+	defer runtimex.HandleCrashToChan(errorReceiveChan)
+
 	// todo addMetrics: 监听器方法耗时
 	tick := time.NewTicker(w.config.watchExpiredInterval)
 	w.logger.Infof("DistributiveWindow watching started. interval: %dms", w.config.watchExpiredInterval.Milliseconds())
@@ -298,7 +303,8 @@ func (d *distributiveSubWindow) detectNotify() {
 	}
 }
 
-func (d *distributiveSubWindow) handleNotify() {
+func (d *distributiveSubWindow) handleNotify(errorReceiveChan chan<- error) {
+	defer runtimex.HandleCrashToChan(errorReceiveChan)
 loop:
 	for {
 		select {

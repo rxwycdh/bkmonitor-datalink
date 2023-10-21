@@ -15,6 +15,7 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/log"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/daemon"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/periodic"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	"github.com/spf13/cobra"
 	"os"
@@ -34,6 +35,7 @@ var taskModuleCmd = &cobra.Command{
 }
 
 func startTaskModule(cmd *cobra.Command, args []string) {
+	defer runtimex.HandleCrash()
 
 	config.InitConfig()
 	log.InitLogger()

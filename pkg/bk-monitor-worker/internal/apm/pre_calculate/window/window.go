@@ -140,7 +140,7 @@ type OperatorMetric struct {
 
 // Operator Window processing strategy
 type Operator interface {
-	Start(spanChan <-chan []Span, runtimeOpt ...RuntimeConfigOption)
+	Start(spanChan <-chan []Span, errorReceiveChan chan<- error, runtimeOpt ...RuntimeConfigOption)
 	ReportMetric() map[OperatorMetricKey][]OperatorMetric
 }
 
@@ -148,8 +148,8 @@ type Operation struct {
 	Operator Operator
 }
 
-func (o *Operation) Run(spanChan <-chan []Span, runtimeOpt ...RuntimeConfigOption) {
-	o.Operator.Start(spanChan, runtimeOpt...)
+func (o *Operation) Run(spanChan <-chan []Span, errorReceiveChan chan<- error, runtimeOpt ...RuntimeConfigOption) {
+	o.Operator.Start(spanChan, errorReceiveChan, runtimeOpt...)
 }
 
 // SpanExistHandler This interface determines how to process existing spans when a span received
