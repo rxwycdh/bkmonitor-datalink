@@ -23,7 +23,7 @@ import (
 // MetadataCenter The configuration center uses dataId as the key and stores basic information,
 // including app_name, bk_biz_name, app_id, etc...
 type MetadataCenter struct {
-	mapping map[string]DataIdInfo
+	mapping *sync.Map
 	consul  consul.Instance
 }
 
@@ -94,7 +94,7 @@ func CreateMetadataCenter() {
 			logger.Errorf("Failed to create consul client. error: %s", err)
 		}
 		centerInstance = &MetadataCenter{
-			mapping: make(map[string]DataIdInfo),
+			mapping: &sync.Map{},
 			consul:  *consulClient,
 		}
 		logger.Infof("Create metadata-center successfully")
@@ -103,7 +103,7 @@ func CreateMetadataCenter() {
 
 func (c *MetadataCenter) AddDataIdAndInfo(dataId string, info DataIdInfo) {
 	info.dataId = dataId
-	c.mapping[dataId] = info
+	c.mapping.Store(dataId, info)
 }
 
 func (c *MetadataCenter) AddDataId(dataId string) error {
@@ -112,7 +112,7 @@ func (c *MetadataCenter) AddDataId(dataId string) error {
 		return err
 	}
 
-	c.mapping[dataId] = info
+	c.mapping.Store(dataId, info)
 	logger.Infof("get dataId info successfully, dataId: %s, info: %+v", dataId, info)
 	return nil
 }
@@ -159,19 +159,23 @@ func (c *MetadataCenter) fillInfo(dataId string, info *DataIdInfo) error {
 }
 
 func (c *MetadataCenter) GetKafkaConfig(dataId string) TraceKafkaConfig {
-	return c.mapping[dataId].TraceKafka
+	v, _ := c.mapping.Load(dataId)
+	return v.(DataIdInfo).TraceKafka
 }
 
 func (c *MetadataCenter) GetTraceEsConfig(dataId string) TraceEsConfig {
-	return c.mapping[dataId].TraceEs
+	v, _ := c.mapping.Load(dataId)
+	return v.(DataIdInfo).TraceEs
 }
 
 func (c *MetadataCenter) GetSaveEsConfig(dataId string) TraceEsConfig {
-	return c.mapping[dataId].SaveEs
+	v, _ := c.mapping.Load(dataId)
+	return v.(DataIdInfo).SaveEs
 }
 
 func (c *MetadataCenter) GetBaseInfo(dataId string) BaseInfo {
-	return c.mapping[dataId].BaseInfo
+	v, _ := c.mapping.Load(dataId)
+	return v.(DataIdInfo).BaseInfo
 }
 
 func GetMetadataCenter() *MetadataCenter {
