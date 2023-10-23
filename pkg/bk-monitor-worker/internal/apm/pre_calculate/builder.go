@@ -234,7 +234,7 @@ type RunInstance struct {
 	metricCollector MetricCollector
 }
 
-func (p *RunInstance) startNotifier() <-chan []window.Span {
+func (p *RunInstance) startNotifier() <-chan []window.StandardSpan {
 	kafkaConfig := core.GetMetadataCenter().GetKafkaConfig(p.dataId)
 	groupId := "go-pre-calculate-worker-consumer"
 	n := notifier.NewNotifier(
@@ -254,7 +254,7 @@ func (p *RunInstance) startNotifier() <-chan []window.Span {
 	return n.Spans()
 }
 
-func (p *RunInstance) startWindowHandler(messageChan <-chan []window.Span, saveReqChan chan<- storage.SaveRequest, errorReceiveChan chan<- error) {
+func (p *RunInstance) startWindowHandler(messageChan <-chan []window.StandardSpan, saveReqChan chan<- storage.SaveRequest, errorReceiveChan chan<- error) {
 
 	processor := window.NewProcessor(p.dataId, p.proxy, p.config.processorConfig...)
 

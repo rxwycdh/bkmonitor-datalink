@@ -18,7 +18,9 @@ import (
 
 	"github.com/ahmetb/go-linq/v3"
 	mapset "github.com/deckarep/golang-set/v2"
+	jsoniter "github.com/json-iterator/go"
 	log "github.com/sirupsen/logrus"
+	"github.com/valyala/fastjson"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 
@@ -107,7 +109,7 @@ func (p *Processor) listSpanFromStorage(event Event) []*StandardSpan {
 		infoKey := storage.CacheTraceInfoKey.Format(p.dataIdBaseInfo.BkBizId, p.dataIdBaseInfo.AppName, event.TraceId)
 		data, err := p.proxy.Query(storage.QueryRequest{Target: storage.Cache, Data: infoKey})
 		if err == nil && data != nil {
-			parseErr := json.Unmarshal(data.([]byte), &spans)
+			parseErr := jsoniter.Unmarshal(data.([]byte), &spans)
 			if parseErr != nil {
 				p.logger.Infof("Cache spans whose traceId is %s was found in traceInfo(key: %s), but failed to be parsed to span list. error: %s", event.TraceId, infoKey, parseErr)
 			} else {
@@ -140,16 +142,34 @@ func (p *Processor) listSpanFromStorage(event Event) []*StandardSpan {
 		log.Errorf("Data whose traceId: %s fails to be obtained from ES. That data will be ignored, and result may be distorted. error: %s", event.TraceId, err)
 		return spans
 	}
-	var originSpans []Span
-	if err = json.Unmarshal(spanBytes.([]byte), &originSpans); err != nil {
+	if spanBytes == nil {
+		// The trace does not exist in es. if it occurs frequently, the Bloom-Filter parameter may be set improperly.
+		p.logger.Debug("The data with traceId: %s is empty from ES.", event.TraceId)
+		return spans
+	}
+	originSpans, err := p.recoverSpans(spanBytes.([]byte))
+	if err != nil {
 		p.logger.Errorf("The data structure in ES is inconsistent, this data will be ignored. traceId: %s. error: %s ", event.TraceId, err)
 		return spans
 	}
 
-	for _, i := range originSpans {
-		spans = append(spans, i.ToStandardSpan())
-	}
+	spans = append(spans, originSpans...)
 	return spans
+}
+
+func (p *Processor) recoverSpans(originSpans []byte) ([]*StandardSpan, error) {
+	var res []*StandardSpan
+	v, _ := fastjson.ParseBytes(originSpans)
+	spans, err := v.Array()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, s := range spans {
+		res = append(res, ToStandardSpan(s))
+	}
+
+	return res, nil
 }
 
 func (p *Processor) Process(receiver chan<- storage.SaveRequest, event Event) {
@@ -287,7 +307,7 @@ func (p *Processor) sendStorageRequests(receiver chan<- storage.SaveRequest, res
 		},
 	}
 
-	resultBytes, _ := json.Marshal(result)
+	resultBytes, _ := jsoniter.Marshal(result)
 	receiver <- storage.SaveRequest{
 		Target: storage.SaveEs,
 		Action: storage.SavePrecalculateResult,

@@ -12,7 +12,7 @@ package notifier
 import (
 	"context"
 	"crypto/sha512"
-	"encoding/json"
+	"github.com/valyala/fastjson"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -68,7 +68,7 @@ type kafkaNotifier struct {
 	handler       consumeHandler
 }
 
-func (k *kafkaNotifier) Spans() <-chan []window.Span {
+func (k *kafkaNotifier) Spans() <-chan []window.StandardSpan {
 	return k.handler.spans
 }
 
@@ -91,7 +91,7 @@ loop:
 }
 
 type consumeHandler struct {
-	spans chan []window.Span
+	spans chan []window.StandardSpan
 }
 
 func (c consumeHandler) Setup(session sarama.ConsumerGroupSession) error {
@@ -108,19 +108,23 @@ func (c consumeHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 		select {
 		case msg := <-claim.Messages():
 			session.MarkMessage(msg, "")
-			var s window.OriginMessage
-			if err := json.Unmarshal(msg.Value, &s); err != nil {
-				logger.Warnf("an abnormal span format was received -> %s. error: %s", msg.Value, err)
-				continue
-			}
-			if len(s.Items) != 0 {
-				c.spans <- s.Items
-			}
+			c.sendSpans(msg.Value)
 		case <-session.Context().Done():
 			logger.Infof("kafka consume handler session done")
 			return nil
 		}
 	}
+}
+
+func (c consumeHandler) sendSpans(message []byte) {
+	var res []window.StandardSpan
+	v, _ := fastjson.ParseBytes(message)
+	items := v.GetArray("items")
+
+	for _, item := range items {
+		res = append(res, *window.ToStandardSpan(item))
+	}
+	c.spans <- res
 }
 
 func newKafkaNotifier(setters ...Option) Notifier {
@@ -142,7 +146,7 @@ func newKafkaNotifier(setters ...Option) Notifier {
 		ctx:           args.ctx,
 		config:        args.KafkaConfig,
 		consumerGroup: group,
-		handler:       consumeHandler{spans: make(chan []window.Span, args.chanBufferSize)},
+		handler:       consumeHandler{spans: make(chan []window.StandardSpan, args.chanBufferSize)},
 	}
 
 }

@@ -12,11 +12,11 @@ package storage
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
+	jsoniter "github.com/json-iterator/go"
 	"io"
 	"time"
 )
@@ -30,7 +30,7 @@ type Converter func(io.ReadCloser) (any, error)
 var (
 	BytesConverter Converter = func(body io.ReadCloser) (any, error) {
 		var resInstance EsQueryResult
-		if err := json.NewDecoder(body).Decode(&resInstance); err != nil {
+		if err := jsoniter.NewDecoder(body).Decode(&resInstance); err != nil {
 			return nil, err
 		}
 
@@ -38,13 +38,16 @@ var (
 		for _, item := range resInstance.Hits.Hits {
 			resMap = append(resMap, item.Source)
 		}
-		r, _ := json.Marshal(resMap)
+		if resMap == nil {
+			return nil, nil
+		}
+		r, _ := jsoniter.Marshal(resMap)
 		return r, nil
 	}
 
 	AggsCountConvert Converter = func(body io.ReadCloser) (any, error) {
 		var resInstance EsQueryResult
-		if err := json.NewDecoder(body).Decode(&resInstance); err != nil {
+		if err := jsoniter.NewDecoder(body).Decode(&resInstance); err != nil {
 			return nil, err
 		}
 
@@ -182,7 +185,7 @@ func (e *esStorage) Query(data any) (any, error) {
 	body := data.(EsQueryData)
 	var buf bytes.Buffer
 
-	if err := json.NewEncoder(&buf).Encode(body.Body); err != nil {
+	if err := jsoniter.NewEncoder(&buf).Encode(body.Body); err != nil {
 		return nil, err
 	}
 

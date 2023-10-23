@@ -10,11 +10,13 @@
 package window
 
 import (
-	"fmt"
+	"strconv"
+
+	"github.com/valyala/fastjson"
+	"go.uber.org/zap"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"go.uber.org/zap"
-	"strconv"
 )
 
 type OriginMessage struct {
@@ -42,58 +44,61 @@ type Span struct {
 	StartTime    int            `json:"start_time"`
 }
 
-func (s *Span) ToStandardSpan() *StandardSpan {
-
-	return &StandardSpan{
-		SpanId:       s.SpanId,
-		SpanName:     s.SpanName,
-		ParentSpanId: s.ParentSpanId,
-		StartTime:    s.StartTime,
-		EndTime:      s.EndTime,
-		ElapsedTime:  s.ElapsedTime,
-		StatusCode:   s.Status.Code,
-		Kind:         s.Kind,
-		Collections:  s.exactStandardFields(),
+func ToStandardSpan(originSpan *fastjson.Value) *StandardSpan {
+	standardSpan := StandardSpan{
+		TraceId:      string(originSpan.GetStringBytes("trace_id")),
+		SpanId:       string(originSpan.GetStringBytes("span_id")),
+		SpanName:     string(originSpan.GetStringBytes("span_name")),
+		ParentSpanId: string(originSpan.GetStringBytes("parent_span_id")),
+		StartTime:    originSpan.GetInt("start_time"),
+		EndTime:      originSpan.GetInt("end_time"),
+		ElapsedTime:  originSpan.GetInt("elapsed_time"),
+		StatusCode:   core.SpanStatusCode(originSpan.Get("status").GetInt("code")),
+		Kind:         originSpan.GetInt("kind"),
 	}
+	standardSpan.Collections = exactStandardFields(standardSpan, originSpan)
+	return &standardSpan
 }
 
-func (s *Span) exactStandardFields() map[string]string {
-	res := make(map[string]string, len(core.StandardFields))
+func exactStandardFields(standardSpan StandardSpan, originSpan *fastjson.Value) map[string]string {
+	// Most spans do not have half of standard fields, capacity is converted to half
+	res := make(map[string]string, len(core.StandardFields)/2)
 
 	for _, f := range core.StandardFields {
 		switch f.Source {
 		case core.SourceAttributes:
-			v, exist := s.Attributes[f.Key]
-			if exist {
-				switch v.(type) {
-				case float64:
-					res[fmt.Sprintf("attributes.%s", f.Key)] = strconv.FormatFloat(v.(float64), 'f', -1, 64)
+			v := originSpan.Get("attributes").Get(f.Key)
+			if v != nil {
+				switch v.Type() {
+				case fastjson.TypeNumber:
+					originV, _ := v.Float64()
+					res[f.FullKey] = strconv.FormatFloat(originV, 'f', -1, 64)
 				default:
-					res[fmt.Sprintf("attributes.%s", f.Key)] = v.(string)
+					res[f.FullKey] = v.String()
 				}
 			}
 		case core.SourceResource:
-			v, exist := s.Resource[f.Key]
-			if exist {
-				switch v.(type) {
-				case float64:
-					res[fmt.Sprintf("attributes.%s", f.Key)] = strconv.FormatFloat(v.(float64), 'f', -1, 64)
+			v := originSpan.Get("resource").Get(f.Key)
+			if v != nil {
+				switch v.Type() {
+				case fastjson.TypeNumber:
+					originV, _ := v.Float64()
+					res[f.FullKey] = strconv.FormatFloat(originV, 'f', -1, 64)
 				default:
-					res[fmt.Sprintf("resource.%s", f.Key)] = v.(string)
+					res[f.FullKey] = v.String()
 				}
 			}
 		case core.SourceOuter:
-			switch f.Key {
+			switch f.FullKey {
 			case "kind":
-				res[f.Key] = strconv.Itoa(s.Kind)
+				res[f.FullKey] = strconv.Itoa(standardSpan.Kind)
 			case "span_name":
-				res[f.Key] = s.SpanName
+				res[f.FullKey] = standardSpan.SpanName
 			default:
 				logger.Warnf("Try to get a standard field: %s that does not exist. Is the standard field been updated?", f.Key)
 			}
 		}
 	}
-
 	return res
 }
 
@@ -104,7 +109,9 @@ type CollectTrace struct {
 
 	Runtime Runtime
 }
+
 type StandardSpan struct {
+	TraceId      string
 	SpanId       string
 	SpanName     string
 	ParentSpanId string
@@ -140,7 +147,7 @@ type OperatorMetric struct {
 
 // Operator Window processing strategy
 type Operator interface {
-	Start(spanChan <-chan []Span, errorReceiveChan chan<- error, runtimeOpt ...RuntimeConfigOption)
+	Start(spanChan <-chan []StandardSpan, errorReceiveChan chan<- error, runtimeOpt ...RuntimeConfigOption)
 	ReportMetric() map[OperatorMetricKey][]OperatorMetric
 }
 
@@ -148,7 +155,7 @@ type Operation struct {
 	Operator Operator
 }
 
-func (o *Operation) Run(spanChan <-chan []Span, errorReceiveChan chan<- error, runtimeOpt ...RuntimeConfigOption) {
+func (o *Operation) Run(spanChan <-chan []StandardSpan, errorReceiveChan chan<- error, runtimeOpt ...RuntimeConfigOption) {
 	o.Operator.Start(spanChan, errorReceiveChan, runtimeOpt...)
 }
 

@@ -86,8 +86,9 @@ func (s SpanKind) IsCalledKind() bool {
 }
 
 type CommonField struct {
-	Source FiledSource
-	Key    string
+	Source  FiledSource
+	Key     string
+	FullKey string
 }
 
 func (c *CommonField) DisplayKey() string {
@@ -110,50 +111,50 @@ const (
 )
 
 var (
-	HttpHostField       = CommonField{SourceAttributes, "http.host"}
-	HttpUrlField        = CommonField{SourceAttributes, "http.url"}
-	NetPeerNameField    = CommonField{SourceAttributes, "net.peer.name"}
-	PeerServiceField    = CommonField{SourceAttributes, "peer.service"}
-	HttpSchemeField     = CommonField{SourceAttributes, "http.scheme"}
-	HttpFlavorField     = CommonField{SourceAttributes, "http.flavor"}
-	HttpMethodField     = CommonField{SourceAttributes, "http.method"}
-	HttpStatusCodeField = CommonField{SourceAttributes, "http.status_code"}
+	HttpHostField       = CommonField{SourceAttributes, "http.host", fmt.Sprintf("%s.%s", SourceAttributes, "http.host")}
+	HttpUrlField        = CommonField{SourceAttributes, "http.url", fmt.Sprintf("%s.%s", SourceAttributes, "http.url")}
+	NetPeerNameField    = CommonField{SourceAttributes, "net.peer.name", fmt.Sprintf("%s.%s", SourceAttributes, "net.peer.name")}
+	PeerServiceField    = CommonField{SourceAttributes, "peer.service", fmt.Sprintf("%s.%s", SourceAttributes, "peer.service")}
+	HttpSchemeField     = CommonField{SourceAttributes, "http.scheme", fmt.Sprintf("%s.%s", SourceAttributes, "http.scheme")}
+	HttpFlavorField     = CommonField{SourceAttributes, "http.flavor", fmt.Sprintf("%s.%s", SourceAttributes, "http.flavor")}
+	HttpMethodField     = CommonField{SourceAttributes, "http.method", fmt.Sprintf("%s.%s", SourceAttributes, "http.method")}
+	HttpStatusCodeField = CommonField{SourceAttributes, "http.status_code", fmt.Sprintf("%s.%s", SourceAttributes, "http.status_code")}
 
-	RpcMethodField    = CommonField{SourceAttributes, "rpc.method"}
-	RpcServiceField   = CommonField{SourceAttributes, "rpc.service"}
-	RpcSystemField    = CommonField{SourceAttributes, "rpc.system"}
-	RpcGrpcStatusCode = CommonField{SourceAttributes, "rpc.grpc.status_code"}
+	RpcMethodField    = CommonField{SourceAttributes, "rpc.method", fmt.Sprintf("%s.%s", SourceAttributes, "rpc.method")}
+	RpcServiceField   = CommonField{SourceAttributes, "rpc.service", fmt.Sprintf("%s.%s", SourceAttributes, "rpc.service")}
+	RpcSystemField    = CommonField{SourceAttributes, "rpc.system", fmt.Sprintf("%s.%s", SourceAttributes, "rpc.system")}
+	RpcGrpcStatusCode = CommonField{SourceAttributes, "rpc.grpc.status_code", fmt.Sprintf("%s.%s", SourceAttributes, "rpc.grpc.status_code")}
 
-	DbNameField      = CommonField{SourceAttributes, "db.name"}
-	DbOperationField = CommonField{SourceAttributes, "db.operation"}
-	DbSystemField    = CommonField{SourceAttributes, "db.system"}
-	DbStatementField = CommonField{SourceAttributes, "db.statement"}
-	DbTypeField      = CommonField{SourceAttributes, "db.type"}
-	DbInstanceField  = CommonField{SourceAttributes, "db.instance"}
+	DbNameField      = CommonField{SourceAttributes, "db.name", fmt.Sprintf("%s.%s", SourceAttributes, "db.name")}
+	DbOperationField = CommonField{SourceAttributes, "db.operation", fmt.Sprintf("%s.%s", SourceAttributes, "db.operation")}
+	DbSystemField    = CommonField{SourceAttributes, "db.system", fmt.Sprintf("%s.%s", SourceAttributes, "db.system")}
+	DbStatementField = CommonField{SourceAttributes, "db.statement", fmt.Sprintf("%s.%s", SourceAttributes, "db.statement")}
+	DbTypeField      = CommonField{SourceAttributes, "db.type", fmt.Sprintf("%s.%s", SourceAttributes, "db.type")}
+	DbInstanceField  = CommonField{SourceAttributes, "db.instance", fmt.Sprintf("%s.%s", SourceAttributes, "db.instance")}
 
-	MessagingRabbitmqRoutingKeyField = CommonField{SourceAttributes, "messaging.rabbitmq.routing_key"}
-	MessagingKafkaKeyField           = CommonField{SourceAttributes, "messaging.kafka.message_key"}
-	MessagingRocketmqKeyField        = CommonField{SourceAttributes, "messaging.rocketmq.message_keys"}
+	MessagingRabbitmqRoutingKeyField = CommonField{SourceAttributes, "messaging.rabbitmq.routing_key", fmt.Sprintf("%s.%s", SourceAttributes, "messaging.rabbitmq.routing_key")}
+	MessagingKafkaKeyField           = CommonField{SourceAttributes, "messaging.kafka.message_key", fmt.Sprintf("%s.%s", SourceAttributes, "messaging.kafka.message_key")}
+	MessagingRocketmqKeyField        = CommonField{SourceAttributes, "messaging.rocketmq.message_keys", fmt.Sprintf("%s.%s", SourceAttributes, "messaging.rocketmq.message_keys")}
 
-	MessagingSystemField          = CommonField{SourceAttributes, "messaging.system"}
-	MessagingDestinationField     = CommonField{SourceAttributes, "messaging.destination"}
-	MessagingDestinationKindField = CommonField{SourceAttributes, "messaging.destination_kind"}
-	CeleryActionField             = CommonField{SourceAttributes, "celery.action"}
-	CeleryTaskNameField           = CommonField{SourceAttributes, "celery.task_name"}
+	MessagingSystemField          = CommonField{SourceAttributes, "messaging.system", fmt.Sprintf("%s.%s", SourceAttributes, "messaging.system")}
+	MessagingDestinationField     = CommonField{SourceAttributes, "messaging.destination", fmt.Sprintf("%s.%s", SourceAttributes, "messaging.destination")}
+	MessagingDestinationKindField = CommonField{SourceAttributes, "messaging.destination_kind", fmt.Sprintf("%s.%s", SourceAttributes, "messaging.destination_kind")}
+	CeleryActionField             = CommonField{SourceAttributes, "celery.action", fmt.Sprintf("%s.%s", SourceAttributes, "celery.action")}
+	CeleryTaskNameField           = CommonField{SourceAttributes, "celery.task_name", fmt.Sprintf("%s.%s", SourceAttributes, "celery.task_name")}
 
-	ServiceNameField          = CommonField{SourceResource, "service.name"}
-	ServiceVersionField       = CommonField{SourceResource, "service.version"}
-	TelemetrySdkLanguageField = CommonField{SourceResource, "telemetry.sdk.language"}
-	TelemetrySdkNameField     = CommonField{SourceResource, "telemetry.sdk.name"}
-	TelemetrySdkVersionField  = CommonField{SourceResource, "telemetry.sdk.version"}
-	ServiceNamespaceField     = CommonField{SourceResource, "service.namespace"}
-	ServiceInstanceIdField    = CommonField{SourceResource, "service.instance.id"}
-	NetHostIpField            = CommonField{SourceResource, "net.host.ip"}
-	NetHostPortField          = CommonField{SourceResource, "net.host.port"}
-	NetHostnameField          = CommonField{SourceResource, "net.host.name"}
-	BkInstanceIdField         = CommonField{SourceResource, "bk.instance.id"}
-	KindField                 = CommonField{SourceOuter, "kind"}
-	SpanNameField             = CommonField{SourceOuter, "span_name"}
+	ServiceNameField          = CommonField{SourceResource, "service.name", fmt.Sprintf("%s.%s", SourceResource, "service.name")}
+	ServiceVersionField       = CommonField{SourceResource, "service.version", fmt.Sprintf("%s.%s", SourceResource, "service.version")}
+	TelemetrySdkLanguageField = CommonField{SourceResource, "telemetry.sdk.language", fmt.Sprintf("%s.%s", SourceResource, "telemetry.sdk.language")}
+	TelemetrySdkNameField     = CommonField{SourceResource, "telemetry.sdk.name", fmt.Sprintf("%s.%s", SourceResource, "telemetry.sdk.name")}
+	TelemetrySdkVersionField  = CommonField{SourceResource, "telemetry.sdk.version", fmt.Sprintf("%s.%s", SourceResource, "telemetry.sdk.version")}
+	ServiceNamespaceField     = CommonField{SourceResource, "service.namespace", fmt.Sprintf("%s.%s", SourceResource, "service.namespace")}
+	ServiceInstanceIdField    = CommonField{SourceResource, "service.instance.id", fmt.Sprintf("%s.%s", SourceResource, "service.instance.id")}
+	NetHostIpField            = CommonField{SourceResource, "net.host.ip", fmt.Sprintf("%s.%s", SourceResource, "net.host.ip")}
+	NetHostPortField          = CommonField{SourceResource, "net.host.port", fmt.Sprintf("%s.%s", SourceResource, "net.host.port")}
+	NetHostnameField          = CommonField{SourceResource, "net.host.name", fmt.Sprintf("%s.%s", SourceResource, "net.host.name")}
+	BkInstanceIdField         = CommonField{SourceResource, "bk.instance.id", fmt.Sprintf("%s.%s", SourceResource, "bk.instance.id")}
+	KindField                 = CommonField{SourceOuter, "kind", "kind"}
+	SpanNameField             = CommonField{SourceOuter, "span_name", "span_name"}
 )
 
 var StandardFields = []CommonField{

@@ -35,6 +35,7 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tylertreat/BoomFilters v0.0.0-20210315201527-1a82519a3e43
+	github.com/valyala/fastjson v1.6.4
 	github.com/xdg-go/scram v1.1.2
 	go.etcd.io/bbolt v1.3.7
 	go.uber.org/automaxprocs v1.5.3

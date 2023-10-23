@@ -19,7 +19,7 @@ import (
 
 type Notifier interface {
 	Start(errorReceiveChan chan<- error)
-	Spans() <-chan []window.Span
+	Spans() <-chan []window.StandardSpan
 }
 
 // Options is configuration items for all notifier
@@ -72,8 +72,8 @@ var (
 
 type emptyNotifier struct{}
 
-func (e emptyNotifier) Spans() <-chan []window.Span {
-	return make(chan []window.Span, 0)
+func (e emptyNotifier) Spans() <-chan []window.StandardSpan {
+	return make(chan []window.StandardSpan, 0)
 }
 
 func (e emptyNotifier) Start(_ chan<- error) {}

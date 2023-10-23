@@ -132,7 +132,7 @@ func (w *DistributiveWindow) locate(uni string) *distributiveSubWindow {
 	return w.subWindows[a]
 }
 
-func (w *DistributiveWindow) Start(spanChan <-chan []Span, errorReceiveChan chan<- error, runtimeOpts ...RuntimeConfigOption) {
+func (w *DistributiveWindow) Start(spanChan <-chan []StandardSpan, errorReceiveChan chan<- error, runtimeOpts ...RuntimeConfigOption) {
 
 	for ob, _ := range w.observers {
 		ob.assembleRuntimeConfig(runtimeOpts...)
@@ -187,7 +187,7 @@ func (w *DistributiveWindow) ReportMetric() map[OperatorMetricKey][]OperatorMetr
 	return r
 }
 
-func (w *DistributiveWindow) Handle(spanChan <-chan []Span, errorReceiveChan chan<- error) {
+func (w *DistributiveWindow) Handle(spanChan <-chan []StandardSpan, errorReceiveChan chan<- error) {
 	defer runtimex.HandleCrashToChan(errorReceiveChan)
 
 	w.logger.Infof("DistributiveWindow handle started.")
@@ -316,18 +316,17 @@ loop:
 	}
 }
 
-func (d *distributiveSubWindow) add(span Span) {
+func (d *distributiveSubWindow) add(span StandardSpan) {
 
 	value, exist := d.m.Load(span.TraceId)
-	standardSpan := span.ToStandardSpan()
 
 	if !exist {
 		graph := NewDiGraph()
-		graph.AddNode(&Node{StandardSpan: standardSpan})
+		graph.AddNode(&Node{StandardSpan: &span})
 		rt := d.runtimeStrategy.handleNew()
 		d.m.Store(span.TraceId, &CollectTrace{
 			TraceId: span.TraceId,
-			Spans:   []*StandardSpan{standardSpan},
+			Spans:   []*StandardSpan{&span},
 			Graph:   graph,
 
 			Runtime: rt,
@@ -335,8 +334,8 @@ func (d *distributiveSubWindow) add(span Span) {
 	} else {
 		collect := value.(*CollectTrace)
 		graph := collect.Graph
-		graph.AddNode(&Node{StandardSpan: standardSpan})
-		collect.Spans = append(collect.Spans, standardSpan)
+		graph.AddNode(&Node{StandardSpan: &span})
+		collect.Spans = append(collect.Spans, &span)
 		collect.Graph = graph
 
 		d.runtimeStrategy.handleExist(&collect.Runtime, *collect)

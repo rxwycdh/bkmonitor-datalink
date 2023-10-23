@@ -10,10 +10,11 @@
 package storage
 
 import (
-	"encoding/json"
-	"github.com/hashicorp/consul/api"
-	"github.com/spf13/viper"
 	"sync"
+
+	"github.com/hashicorp/consul/api"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/spf13/viper"
 )
 
 type ConsulOption func(*ConsulOptions)
@@ -63,7 +64,7 @@ func NewConsul(options ...ConsulOption) (*Consul, error) {
 
 func (c *Consul) Put(key string, val any) error {
 
-	byteData, _ := json.Marshal(val)
+	byteData, _ := jsoniter.Marshal(val)
 	kvPair := &api.KVPair{Key: key, Value: byteData}
 	_, err := c.client.KV().Put(kvPair, nil)
 	if err != nil {
