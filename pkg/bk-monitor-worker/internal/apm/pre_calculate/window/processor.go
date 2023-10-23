@@ -10,7 +10,6 @@
 package window
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -288,7 +287,7 @@ func (p *Processor) Process(receiver chan<- storage.SaveRequest, event Event) {
 
 func (p *Processor) sendStorageRequests(receiver chan<- storage.SaveRequest, result ProcessResult, event Event) {
 	if p.config.enabledInfoCache {
-		spanBytes, _ := json.Marshal(event.Spans)
+		spanBytes, _ := jsoniter.Marshal(event.Spans)
 		receiver <- storage.SaveRequest{
 			Target: storage.Cache,
 			Action: storage.SaveTraceCache,

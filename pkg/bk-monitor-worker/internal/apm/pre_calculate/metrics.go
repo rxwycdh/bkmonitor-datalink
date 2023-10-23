@@ -11,11 +11,11 @@ package pre_calculate
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
 	"github.com/grafana/pyroscope-go"
+	jsoniter "github.com/json-iterator/go"
 	"io"
 	"net/http"
 	"time"
@@ -344,7 +344,7 @@ func (r *MetricCollector) ReportToServer(m metric, v int, dimension map[string]s
 			},
 		},
 	}
-	jsonData, err := json.Marshal(data)
+	jsonData, err := jsoniter.Marshal(data)
 	if err != nil {
 		apmLogger.Errorf("Parsing json data failed. This metric: %s will not be reported. error: %s", m.m[mIndex].name, err)
 		return

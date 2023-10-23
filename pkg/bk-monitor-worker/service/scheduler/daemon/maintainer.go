@@ -11,7 +11,7 @@ package daemon
 
 import (
 	"context"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"sync"
 	"time"
 
@@ -70,7 +70,7 @@ func (r *RunMaintainer) Run() {
 
 			for taskUniId, taskStr := range taskHash {
 				var taskBinding TaskBinding
-				if err = json.Unmarshal([]byte(taskStr), &taskBinding); err != nil {
+				if err = jsoniter.Unmarshal([]byte(taskStr), &taskBinding); err != nil {
 					logger.Errorf("failed to parse value to TaskBinding on key: %s field: %s. error: %s", r.listenTaskKey, taskUniId, err)
 					continue
 				}

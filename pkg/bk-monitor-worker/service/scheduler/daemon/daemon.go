@@ -12,9 +12,10 @@ package daemon
 import (
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"math/rand"
+
+	jsoniter "github.com/json-iterator/go"
 
 	rdb "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/broker/redis"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/common"
@@ -122,7 +123,7 @@ func computeWorker(t task.SerializerTask) (service.WorkerInfo, error) {
 
 	// TODO 从worker列表中选择worker进行调度 待补充更多的调度规则 目前暂时使用随机选择
 	data, _ := redisClient.Get(ctx, keys[rand.Intn(len(keys))]).Bytes()
-	if err = json.Unmarshal(data, &res); err != nil {
+	if err = jsoniter.Unmarshal(data, &res); err != nil {
 		return res, fmt.Errorf("parse workerInfo failed. error: %s", err)
 	}
 	return res, nil

@@ -11,8 +11,8 @@ package daemon
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"sync"
 
 	rdb "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/broker/redis"
@@ -81,12 +81,12 @@ func (b *Binding) addBinding(taskBinding TaskBinding, workerBinding WorkerBindin
 		return nil
 	}
 
-	workerBindingBytes, _ := json.Marshal(workerBinding)
+	workerBindingBytes, _ := jsoniter.Marshal(workerBinding)
 	if err = b.redisClient.HSet(ctx, common.DaemonBindingTask(), taskBinding.UniId, workerBindingBytes).Err(); err != nil {
 		return fmt.Errorf("failed to add a task binding, error: %s", err)
 	}
 
-	taskBindingBytes, _ := json.Marshal(taskBinding)
+	taskBindingBytes, _ := jsoniter.Marshal(taskBinding)
 	if err = b.redisClient.HSet(ctx, common.DaemonBindingWorker(workerBinding.WorkerId), taskBinding.UniId, taskBindingBytes).Err(); err != nil {
 		return fmt.Errorf("failed to add a worker binding, error: %s", err)
 	}
@@ -99,7 +99,7 @@ func (b *Binding) deleteBinding(taskUniId string) error {
 
 	workerInfoStr, err := b.getWorkerByTask(ctx, taskUniId)
 	var workerBinding WorkerBinding
-	if err = json.Unmarshal([]byte(workerInfoStr), &workerBinding); err != nil {
+	if err = jsoniter.Unmarshal([]byte(workerInfoStr), &workerBinding); err != nil {
 		return fmt.Errorf("failed to parse value to WokerInfo on taskUniId Binding: %s, value: %s. error: %s", taskUniId, workerInfoStr, err)
 	}
 
@@ -159,7 +159,7 @@ func (b *Binding) deleteWorkerBinding(workerId string) error {
 
 func (b *Binding) toWorkerBinding(workerStr string) (*WorkerBinding, error) {
 	var res WorkerBinding
-	if err := json.Unmarshal([]byte(workerStr), &res); err != nil {
+	if err := jsoniter.Unmarshal([]byte(workerStr), &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -167,7 +167,7 @@ func (b *Binding) toWorkerBinding(workerStr string) (*WorkerBinding, error) {
 
 func (b *Binding) toTaskBinding(taskStr string) (*TaskBinding, error) {
 	var res TaskBinding
-	if err := json.Unmarshal([]byte(taskStr), &res); err != nil {
+	if err := jsoniter.Unmarshal([]byte(taskStr), &res); err != nil {
 		return nil, err
 	}
 

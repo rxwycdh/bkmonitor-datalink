@@ -11,8 +11,8 @@ package pre_calculate
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"sync"
 	"time"
 
@@ -138,7 +138,7 @@ func NewPrecalculate() Builder {
 func (p *Precalculate) Start(ctx context.Context, errorReceiveChan chan<- error, payload []byte) {
 
 	var startInfo StartInfo
-	if err := json.Unmarshal(payload, &startInfo); err != nil {
+	if err := jsoniter.Unmarshal(payload, &startInfo); err != nil {
 		logger.Errorf("Failed to start APM-Precalculate as parse value to StartInfo error, value: %s. error: %s", payload, err)
 		return
 	}
