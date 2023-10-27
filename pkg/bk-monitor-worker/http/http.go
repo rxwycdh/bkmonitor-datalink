@@ -10,12 +10,13 @@
 package http
 
 import (
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/metrics"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/metrics"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
 func prometheusHandler() gin.HandlerFunc {
@@ -38,15 +39,15 @@ func NewHTTPService(enableApi bool) *gin.Engine {
 
 	if enableApi {
 		// 注册任务
-		svr.POST("/task/", CreateTask)
+		svr.POST("/bmw/task/", CreateTask)
 		// 获取运行中的任务列表
-		svr.GET("/task/", ListTask)
+		svr.GET("/bmw/task/", ListTask)
 		// 删除任务
-		svr.DELETE("/task/", RemoveTask)
+		svr.DELETE("/bmw/task/", RemoveTask)
 	}
 
 	// metrics
-	svr.GET("/metrics", prometheusHandler())
+	svr.GET("/bmw/metrics", prometheusHandler())
 
 	return svr
 }
