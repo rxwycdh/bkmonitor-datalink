@@ -135,8 +135,8 @@ func (c *MetadataCenter) fillInfo(dataId string, info *DataIdInfo) error {
 	// if it is a business of space-type, then the bkBizName is negative(eg. -4332771)
 	var bizName string
 	switch apmInfo.BkBizName.(type) {
-	case int:
-		bizName = strconv.Itoa(apmInfo.BkBizName.(int))
+	case float64:
+		bizName = strconv.FormatFloat(apmInfo.BkBizName.(float64), 'f', -1, 64)
 	default:
 		bizName = apmInfo.BkBizName.(string)
 	}
