@@ -12,6 +12,8 @@ package pre_calculate
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
 	"sync"
 	"time"
 
@@ -66,6 +68,8 @@ type Precalculate struct {
 
 	readySignalChan  chan readySignal
 	runningInstances []*RunInstance
+
+	httpTransport *http.Transport
 }
 
 type PrecalculateOption struct {
@@ -132,7 +136,19 @@ func (p *Precalculate) Build() PreCalculateProcessor {
 }
 
 func NewPrecalculate() Builder {
-	return &Precalculate{readySignalChan: make(chan readySignal, 0)}
+
+	httpMetricTransport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   10 * time.Second,
+			KeepAlive: 10 * time.Second,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	return &Precalculate{readySignalChan: make(chan readySignal, 0), httpTransport: httpMetricTransport}
 }
 
 func (p *Precalculate) Start(ctx context.Context, errorReceiveChan chan<- error, payload []byte) {
@@ -213,7 +229,7 @@ func (p *Precalculate) launch(parentCtx context.Context, dataId string, conf Pre
 	saveReqChan := runInstance.startStorageBackend()
 	runInstance.startWindowHandler(messageChan, saveReqChan, errorReceiveChan)
 
-	runInstance.startMetricReport()
+	runInstance.startMetricReport(p.httpTransport)
 
 	apmLogger.Infof("dataId: %s launch successfully", dataId)
 	p.runningInstances = append(p.runningInstances, &runInstance)
@@ -296,7 +312,7 @@ func (p *RunInstance) startStorageBackend() chan<- storage.SaveRequest {
 	return proxy.SaveRequest()
 }
 
-func (p *RunInstance) startMetricReport() {
+func (p *RunInstance) startMetricReport(transport *http.Transport) {
 	if len(p.config.metricReportConfig) == 0 {
 		apmLogger.Infof("[!] Metric is not configured, the indicator will not be reported")
 		return
@@ -307,6 +323,6 @@ func (p *RunInstance) startMetricReport() {
 		setter(&opt)
 	}
 
-	p.metricCollector = NewMetricCollector(opt)
+	p.metricCollector = NewMetricCollector(opt, transport)
 	p.metricCollector.StartReport(p)
 }

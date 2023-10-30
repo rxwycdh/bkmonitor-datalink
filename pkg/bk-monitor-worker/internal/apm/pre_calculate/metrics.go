@@ -36,6 +36,7 @@ type metric struct {
 
 type MetricCollector struct {
 	MetricOptions
+	httpTransport *http.Transport
 }
 
 type MetricOption func(options *MetricOptions)
@@ -144,8 +145,8 @@ func EsTraceCountMetric(originCountDataId int, originCountAt string, preCalDataI
 	}
 }
 
-func NewMetricCollector(o MetricOptions) MetricCollector {
-	return MetricCollector{MetricOptions: o}
+func NewMetricCollector(o MetricOptions, transport *http.Transport) MetricCollector {
+	return MetricCollector{MetricOptions: o, httpTransport: transport}
 }
 
 func (r *MetricCollector) StartReport(runIns *RunInstance) {
@@ -360,7 +361,7 @@ func (r *MetricCollector) ReportToServer(m metric, v int, dimension map[string]s
 	req.Header.Set("Content-Type", "application/json")
 
 	// 发送请求并获取响应
-	client := &http.Client{}
+	client := &http.Client{Transport: r.httpTransport}
 	resp, err := client.Do(req)
 	if err != nil {
 		apmLogger.Errorf("Post request failed. This metric: %s will not be reported. error: %s", m.m[mIndex].name, err)
