@@ -11,6 +11,7 @@ package window
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/valyala/fastjson"
 	"go.uber.org/zap"
@@ -74,7 +75,7 @@ func exactStandardFields(standardSpan StandardSpan, originSpan *fastjson.Value) 
 					originV, _ := v.Float64()
 					res[f.FullKey] = strconv.FormatFloat(originV, 'f', -1, 64)
 				default:
-					res[f.FullKey] = v.String()
+					res[f.FullKey] = strings.Trim(v.String(), `"`)
 				}
 			}
 		case core.SourceResource:
@@ -85,7 +86,7 @@ func exactStandardFields(standardSpan StandardSpan, originSpan *fastjson.Value) 
 					originV, _ := v.Float64()
 					res[f.FullKey] = strconv.FormatFloat(originV, 'f', -1, 64)
 				default:
-					res[f.FullKey] = v.String()
+					res[f.FullKey] = strings.Trim(v.String(), `"`)
 				}
 			}
 		case core.SourceOuter:

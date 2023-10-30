@@ -322,8 +322,8 @@ func sortNode(nodeDegrees []NodeDegree) func(a, b int) bool {
 		aItem := nodeDegrees[a]
 		bItem := nodeDegrees[b]
 
-		if aItem.Degree != aItem.Degree {
-			return aItem.Degree > bItem.Degree
+		if aItem.Degree != bItem.Degree {
+			return aItem.Degree < bItem.Degree
 		}
 		return aItem.Node.StartTime < bItem.Node.StartTime
 	}
