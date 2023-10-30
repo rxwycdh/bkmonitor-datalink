@@ -29,7 +29,7 @@ type MetadataCenter struct {
 
 type ConsulInfo struct {
 	BkBizId     int             `json:"bk_biz_id"`
-	BkBizName   string          `json:"bk_biz_name"`
+	BkBizName   any             `json:"bk_biz_name"`
 	AppId       int             `json:"app_id"`
 	AppName     string          `json:"app_name"`
 	KafkaInfo   consulKafkaInfo `json:"kafka_info"`
@@ -131,9 +131,19 @@ func (c *MetadataCenter) fillInfo(dataId string, info *DataIdInfo) error {
 	if err = json.Unmarshal(bytesData, &apmInfo); err != nil {
 		return fmt.Errorf("failed to parse value to ApmInfo, value: %s. error: %s", bytesData, err)
 	}
+
+	// if it is a business of space-type, then the bkBizName is negative(eg. -4332771)
+	var bizName string
+	switch apmInfo.BkBizName.(type) {
+	case int:
+		bizName = strconv.Itoa(apmInfo.BkBizName.(int))
+	default:
+		bizName = apmInfo.BkBizName.(string)
+	}
+
 	info.BaseInfo = BaseInfo{
 		BkBizId:   strconv.Itoa(apmInfo.BkBizId),
-		BkBizName: apmInfo.BkBizName,
+		BkBizName: bizName,
 		AppId:     strconv.Itoa(apmInfo.AppId),
 		AppName:   apmInfo.AppName,
 	}
