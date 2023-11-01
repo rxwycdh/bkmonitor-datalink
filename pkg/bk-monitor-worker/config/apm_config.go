@@ -71,7 +71,7 @@ func initApmVariables() {
 	StorageSaveHoldMaxDuration = GetValue("taskConfig.apmPreCalculate.storage.saveHoldMaxDuration", 500)
 	StorageBloomFpRate = GetValue("taskConfig.apmPreCalculate.storage.bloom.fpRate", 0.01)
 	StorageBloomAutoClean = GetValue("taskConfig.apmPreCalculate.storage.bloom.autoClean", 24*60)
-	StorageBloomInitCap = GetValue("taskConfig.apmPreCalculate.storage.bloom.initCap", 1000*1000*10)
+	StorageBloomInitCap = GetValue("taskConfig.apmPreCalculate.storage.bloom.initCap", 1000*1000)
 
 	/*
 	   Metric Config

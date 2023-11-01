@@ -80,6 +80,7 @@ type MemoryBloom struct {
 	config        BloomOptions
 	c             *boom.ScalableBloomFilter
 	nextCleanDate time.Time
+	cleanDuration time.Duration
 }
 
 func (m *MemoryBloom) Add(data BloomStorageData) error {
@@ -99,15 +100,16 @@ func (m *MemoryBloom) AutoReset() {
 		logger.Infof("Next time the filter reset data is %s", m.nextCleanDate)
 		if time.Now().After(m.nextCleanDate) {
 			logger.Infof("Bloom-filter reset data trigger")
-			m.c.Reset()
+			m.c = m.c.Reset()
+			m.nextCleanDate = time.Now().Add(m.cleanDuration)
 		}
-		time.Sleep(24 * time.Hour)
+		time.Sleep(1 * time.Minute)
 	}
 }
 
 func newMemoryCacheBloomClient(options BloomOptions) (BloomOperator, error) {
 	sbf := boom.NewScalableBloomFilter(10000, options.fpRate, 0.8)
-	bloom := &MemoryBloom{c: sbf, config: options, nextCleanDate: time.Now().Add(options.autoClean)}
+	bloom := &MemoryBloom{c: sbf, config: options, nextCleanDate: time.Now().Add(options.autoClean), cleanDuration: options.autoClean}
 	go bloom.AutoReset()
 	return bloom, nil
 }
