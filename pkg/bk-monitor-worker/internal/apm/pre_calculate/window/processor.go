@@ -10,17 +10,17 @@
 package window
 
 import (
+	"sort"
+	"strconv"
+	"time"
+
 	"github.com/ahmetb/go-linq/v3"
 	mapset "github.com/deckarep/golang-set/v2"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/minio/highwayhash"
 	log "github.com/sirupsen/logrus"
 	"github.com/valyala/fastjson"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
-	"sort"
-	"strconv"
-	"time"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
@@ -96,13 +96,14 @@ func (p *Processor) PreProcess(receiver chan<- storage.SaveRequest, event Event)
 
 func (p *Processor) getBloomKey(traceId string) ([]byte, error) {
 
-	h, err := highwayhash.New([]byte(core.HashSecret))
-	if err != nil {
-		return nil, err
-	}
-
-	h.Write([]byte(traceId))
-	return h.Sum(nil), nil
+	//h, err := highwayhash.New([]byte(core.HashSecret))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//h.Write([]byte(traceId))
+	//return h.Sum(nil), nil
+	return []byte(traceId), nil
 }
 
 func (p *Processor) revertToCollect(event *Event, exists []*StandardSpan) {
