@@ -13,20 +13,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	rdb "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/broker/redis"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/common"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/daemon"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
+	rdb "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/broker/redis"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/common"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/metrics"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/daemon"
 	storeRedis "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/store/redis"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/errors"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/timex"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/worker"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
 type taskOptions struct {
@@ -51,6 +51,10 @@ type daemonTaskItem struct {
 type removeTaskParams struct {
 	TaskType  string `json:"task_type"`
 	TaskUniId string `json:"task_uni_id"`
+}
+
+type removeAllTaskParams struct {
+	TaskType string `json:"task_type"`
 }
 
 // CreateTask create a delay task
@@ -175,6 +179,29 @@ func enqueueDaemonTask(t *task.Task) error {
 	}
 
 	return client.SAdd(context.Background(), common.DaemonTaskKey(), data).Err()
+}
+
+func RemoveAllTask(c *gin.Context) {
+	params := new(removeAllTaskParams)
+	if err := BindJSON(c, params); err != nil {
+		BadReqResponse(c, "parse params error: %v", err)
+		return
+	}
+
+	switch params.TaskType {
+	case DaemonTask:
+		client := rdb.GetRDB().Client()
+		_, err := client.Del(context.Background(), common.DaemonTaskKey()).Result()
+		if err != nil {
+			ServerErrResponse(c, fmt.Sprintf("failed to delete key: %s.", common.DaemonTaskKey()), err)
+			return
+		}
+		Response(c, &gin.H{})
+		return
+	default:
+		ServerErrResponse(c, fmt.Sprintf("Task remove not support type: %s", params.TaskType))
+		return
+	}
 }
 
 func RemoveTask(c *gin.Context) {

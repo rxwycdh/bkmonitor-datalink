@@ -111,7 +111,7 @@ taskConfig:
         saveHoldMaxDuration: 500
         bloom:
           fpRate: 0.01
-          autoClean: 30
+          autoClean: 24
     metrics:
       enabled: false
       profile:

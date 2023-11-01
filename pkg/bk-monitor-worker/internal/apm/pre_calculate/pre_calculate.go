@@ -64,6 +64,7 @@ func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
 			storage.RedisBloomConfig(
 				storage.BloomFpRate(config.StorageBloomFpRate),
 				storage.BloomAutoClean(config.StorageBloomAutoClean),
+				storage.InitCap(config.StorageBloomInitCap),
 			),
 			storage.SaveReqBufferSize(config.StorageSaveRequestBufferSize),
 		).

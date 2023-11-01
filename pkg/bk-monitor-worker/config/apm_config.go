@@ -22,13 +22,13 @@ var (
 	DistributiveWindowConcurrentCount             int
 	DistributiveWindowConcurrentExpirationMaximum int
 	EnabledTraceInfoCache                         int
-	TraceMetaBloomCutLength                       int
 	StorageSaveRequestBufferSize                  int
 	StorageWorkerCount                            int
 	StorageSaveHoldMaxCount                       int
 	StorageSaveHoldMaxDuration                    int
 	StorageBloomFpRate                            float64
 	StorageBloomAutoClean                         int
+	StorageBloomInitCap                           int
 
 	MetricEnabled                       bool
 	MetricReportInterval                int
@@ -64,14 +64,14 @@ func initApmVariables() {
 	DistributiveWindowConcurrentExpirationMaximum = GetValue("taskConfig.apmPreCalculate.window.distributive.concurrentExpirationMaximum", 100000)
 
 	EnabledTraceInfoCache = GetValue("taskConfig.apmPreCalculate.processor.enabledTraceInfoCache", 0)
-	TraceMetaBloomCutLength = GetValue("taskConfig.apmPreCalculate.processor.traceMetaBloomCutLength", 16)
 
 	StorageSaveRequestBufferSize = GetValue("taskConfig.apmPreCalculate.storage.saveRequestBufferSize", 100000)
 	StorageWorkerCount = GetValue("taskConfig.apmPreCalculate.storage.workerCount", 10)
 	StorageSaveHoldMaxCount = GetValue("taskConfig.apmPreCalculate.storage.saveHoldMaxCount", 1000)
 	StorageSaveHoldMaxDuration = GetValue("taskConfig.apmPreCalculate.storage.saveHoldMaxDuration", 500)
 	StorageBloomFpRate = GetValue("taskConfig.apmPreCalculate.storage.bloom.fpRate", 0.01)
-	StorageBloomAutoClean = GetValue("taskConfig.apmPreCalculate.storage.bloom.autoClean", 30)
+	StorageBloomAutoClean = GetValue("taskConfig.apmPreCalculate.storage.bloom.autoClean", 24*60)
+	StorageBloomInitCap = GetValue("taskConfig.apmPreCalculate.storage.bloom.initCap", 1000*1000*10)
 
 	/*
 	   Metric Config

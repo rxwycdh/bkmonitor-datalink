@@ -44,6 +44,8 @@ func NewHTTPService(enableApi bool) *gin.Engine {
 		svr.GET("/bmw/task/", ListTask)
 		// 删除任务
 		svr.DELETE("/bmw/task/", RemoveTask)
+		// 删除所有任务
+		svr.DELETE("/bmw/task/all", RemoveAllTask)
 	}
 
 	// metrics

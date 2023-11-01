@@ -10,10 +10,11 @@
 package storage
 
 import (
+	"time"
+
 	redisBloom "github.com/RedisBloom/redisbloom-go"
 	"github.com/gomodule/redigo/redis"
 	boom "github.com/tylertreat/BoomFilters"
-	"time"
 )
 
 type BloomStorageData struct {
@@ -28,6 +29,7 @@ type BloomOperator interface {
 type BloomOptions struct {
 	fpRate    float64
 	autoClean time.Duration
+	initCap   int
 }
 
 type BloomOption func(*BloomOptions)
@@ -40,7 +42,13 @@ func BloomFpRate(s float64) BloomOption {
 
 func BloomAutoClean(s int) BloomOption {
 	return func(options *BloomOptions) {
-		options.autoClean = time.Duration(s) * 24 * time.Hour
+		options.autoClean = time.Duration(s) * time.Minute
+	}
+}
+
+func InitCap(s int) BloomOption {
+	return func(options *BloomOptions) {
+		options.initCap = s
 	}
 }
 
@@ -98,7 +106,7 @@ func (m *MemoryBloom) AutoReset() {
 }
 
 func newMemoryCacheBloomClient(options BloomOptions) (BloomOperator, error) {
-	sbf := boom.NewDefaultScalableBloomFilter(options.fpRate)
+	sbf := boom.NewScalableBloomFilter(10000, options.fpRate, 0.8)
 	bloom := &MemoryBloom{c: sbf, config: options, nextCleanDate: time.Now().Add(options.autoClean)}
 	go bloom.AutoReset()
 	return bloom, nil
