@@ -13,10 +13,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"go.uber.org/zap"
-	"time"
 )
 
 type (
@@ -36,7 +38,7 @@ type (
 
 	ExistRequest struct {
 		Target Target
-		Key    string
+		Key    []byte
 	}
 )
 

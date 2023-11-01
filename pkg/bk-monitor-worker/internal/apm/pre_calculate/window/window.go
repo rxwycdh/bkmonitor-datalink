@@ -131,7 +131,7 @@ func (s *StandardSpan) GetFieldValue(f core.CommonField) string {
 
 // Handler window handle logic
 type Handler interface {
-	add(Span)
+	add(StandardSpan)
 }
 
 type OperatorMetricKey string

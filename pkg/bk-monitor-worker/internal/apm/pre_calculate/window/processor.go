@@ -10,18 +10,17 @@
 package window
 
 import (
-	"fmt"
-	"sort"
-	"strconv"
-	"time"
-
 	"github.com/ahmetb/go-linq/v3"
 	mapset "github.com/deckarep/golang-set/v2"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/minio/highwayhash"
 	log "github.com/sirupsen/logrus"
 	"github.com/valyala/fastjson"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
+	"sort"
+	"strconv"
+	"time"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
@@ -75,22 +74,35 @@ type Processor struct {
 }
 
 func (p *Processor) PreProcess(receiver chan<- storage.SaveRequest, event Event) {
-
-	exist, err := p.proxy.Exist(storage.ExistRequest{Target: storage.BloomFilter, Key: p.getBloomKey(event.TraceId)})
+	bloomKey, err := p.getBloomKey(event.TraceId)
 	if err != nil {
-		p.logger.Warnf("Attempt to retrieve traceMeta from Bloom-filter failed, this traceId: %s will be process as a new window. error: %s", event.TraceId, err)
+		p.logger.Warnf("failed to get filter key, this traceId: %s will be process as a new window. error: %s", event.TraceId, err)
 		p.Process(receiver, event)
 	} else {
-		if exist {
-			existSpans := p.listSpanFromStorage(event)
-			p.revertToCollect(&event, existSpans)
+		exist, err := p.proxy.Exist(storage.ExistRequest{Target: storage.BloomFilter, Key: bloomKey})
+		if err != nil {
+			p.logger.Warnf("Attempt to retrieve traceMeta from Bloom-filter failed, this traceId: %s will be process as a new window. error: %s", event.TraceId, err)
+			p.Process(receiver, event)
+		} else {
+			if exist {
+				existSpans := p.listSpanFromStorage(event)
+				p.revertToCollect(&event, existSpans)
+			}
+			p.Process(receiver, event)
 		}
-		p.Process(receiver, event)
 	}
+
 }
 
-func (p *Processor) getBloomKey(traceId string) string {
-	return fmt.Sprintf("%s%s", p.dataIdBaseInfo.AppId, traceId[:p.config.traceMetaCutLength])
+func (p *Processor) getBloomKey(traceId string) ([]byte, error) {
+
+	h, err := highwayhash.New([]byte(core.HashSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	h.Write([]byte(traceId))
+	return h.Sum(nil), nil
 }
 
 func (p *Processor) revertToCollect(event *Event, exists []*StandardSpan) {
@@ -299,11 +311,16 @@ func (p *Processor) sendStorageRequests(receiver chan<- storage.SaveRequest, res
 		}
 	}
 
-	receiver <- storage.SaveRequest{
-		Target: storage.BloomFilter,
-		Data: storage.BloomStorageData{
-			Key: p.getBloomKey(event.TraceId),
-		},
+	bloomKey, err := p.getBloomKey(event.TraceId)
+	if err != nil {
+		p.logger.Warnf("failed to get filter key of bloom-filter, this trace will not be saved. error: %s", err)
+	} else {
+		receiver <- storage.SaveRequest{
+			Target: storage.BloomFilter,
+			Data: storage.BloomStorageData{
+				Key: bloomKey,
+			},
+		}
 	}
 
 	resultBytes, _ := jsoniter.Marshal(result)
@@ -415,8 +432,7 @@ func collectCollections(collections map[string][]string, spanCollections map[str
 }
 
 type ProcessorOptions struct {
-	enabledInfoCache   bool
-	traceMetaCutLength int
+	enabledInfoCache bool
 }
 
 type ProcessorOption func(*ProcessorOptions)
@@ -426,23 +442,6 @@ type ProcessorOption func(*ProcessorOptions)
 func EnabledTraceInfoCache(b bool) ProcessorOption {
 	return func(options *ProcessorOptions) {
 		options.enabledInfoCache = b
-	}
-}
-
-// TraceMetaCutLength When the processor determines whether this trace has survived in the window,
-// the Bloom-filter mechanism is used.
-// In order to keep the key length as short as possible,
-// the TraceId needs to be cut short.
-// The accuracy of the determination varies with the length after cutting.
-// -------- PROBABILITY FORMULA --------
-// Assuming that R traceIds can be generated per minute,
-// we only take the first N of the traceIds.
-// Formula:
-// Time (minutes) T = (log(0.5)/log(1-1/36 ^N))/R,
-// resulting in a 50% probability of repetition every T minutes.
-func TraceMetaCutLength(b int) ProcessorOption {
-	return func(options *ProcessorOptions) {
-		options.traceMetaCutLength = b
 	}
 }
 

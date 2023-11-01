@@ -43,7 +43,6 @@ func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
 		).
 		WithProcessorConfig(
 			window.EnabledTraceInfoCache(config.EnabledTraceInfoCache != 0),
-			window.TraceMetaCutLength(config.TraceMetaBloomCutLength),
 		).
 		WithStorageConfig(
 			storage.WorkerCount(config.StorageWorkerCount),

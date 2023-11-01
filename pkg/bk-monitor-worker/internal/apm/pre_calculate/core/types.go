@@ -9,11 +9,15 @@
 
 package core
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	// SpanMaxSize Maximum of analyses
 	SpanMaxSize = 10000
+	// HashSecret secret of hash
+	HashSecret = "NMXhKSoWSa1APz0T68etCgHnmJQiim1B"
 )
 
 type SpanCategory string

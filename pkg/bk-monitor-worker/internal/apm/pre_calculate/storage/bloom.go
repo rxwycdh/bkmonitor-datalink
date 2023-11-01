@@ -17,12 +17,12 @@ import (
 )
 
 type BloomStorageData struct {
-	Key string
+	Key []byte
 }
 
 type BloomOperator interface {
 	Add(BloomStorageData) error
-	Exist(string) (bool, error)
+	Exist([]byte) (bool, error)
 }
 
 type BloomOptions struct {
@@ -51,12 +51,12 @@ type Bloom struct {
 }
 
 func (b *Bloom) Add(data BloomStorageData) error {
-	_, err := b.c.Add(b.filterName, data.Key)
+	_, err := b.c.Add(b.filterName, string(data.Key))
 	return err
 }
 
-func (b *Bloom) Exist(k string) (bool, error) {
-	return b.c.Exists(b.filterName, k)
+func (b *Bloom) Exist(k []byte) (bool, error) {
+	return b.c.Exists(b.filterName, string(k))
 }
 
 func newRedisBloomClient(rConfig RedisCacheOptions, opts BloomOptions) (BloomOperator, error) {
@@ -75,12 +75,12 @@ type MemoryBloom struct {
 }
 
 func (m *MemoryBloom) Add(data BloomStorageData) error {
-	m.c.Add([]byte(data.Key))
+	m.c.Add(data.Key)
 	return nil
 }
 
-func (m *MemoryBloom) Exist(key string) (bool, error) {
-	return m.c.Test([]byte(key)), nil
+func (m *MemoryBloom) Exist(key []byte) (bool, error) {
+	return m.c.Test(key), nil
 }
 
 func (m *MemoryBloom) AutoReset() {

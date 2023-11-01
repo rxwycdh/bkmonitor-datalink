@@ -26,6 +26,7 @@ require (
 	github.com/hashicorp/consul/api v1.20.0
 	github.com/jinzhu/gorm v1.9.16
 	github.com/json-iterator/go v1.1.12
+	github.com/minio/highwayhash v1.0.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
