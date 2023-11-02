@@ -377,7 +377,7 @@ func (r *MetricCollector) ReportToServer(m metric, v int, dimension map[string]s
 
 func (r *MetricCollector) startProfiling(dataId string) {
 
-	n := "apm_precalculate_application"
+	n := "apm_precalculate"
 	_, err := pyroscope.Start(pyroscope.Config{
 		ApplicationName: n,
 		ServerAddress:   r.profileAddress,
