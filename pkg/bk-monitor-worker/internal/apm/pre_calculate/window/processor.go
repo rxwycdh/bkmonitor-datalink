@@ -247,7 +247,7 @@ func (p *Processor) Process(receiver chan<- storage.SaveRequest, event Event) {
 		AppId:               baseInfo.AppId,
 		AppName:             baseInfo.AppName,
 		TraceId:             event.TraceId,
-		HierarchyCount:      graph.LongestPath(),
+		HierarchyCount:      graph.LongestPath() + 1,
 		ServiceCount:        len(services.ToSlice()),
 		SpanCount:           len(event.Spans),
 		MinStartTime:        startTimes[0],
