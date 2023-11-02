@@ -294,7 +294,7 @@ func (d *distributiveSubWindow) detectNotify() {
 		for _, k := range expiredKeys {
 			v, exists := d.m.Load(k)
 			if !exists {
-				d.logger.Errorf("An expired key[%s] was detected but does not exist in the mapping", string(k))
+				d.logger.Errorf("An expired key[%s] was detected but does not exist in the mapping", k)
 				continue
 			}
 			d.m.Delete(k)

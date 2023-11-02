@@ -29,6 +29,7 @@ var (
 	StorageBloomFpRate                            float64
 	StorageBloomAutoClean                         int
 	StorageBloomInitCap                           int
+	StorageBloomLayers                            int
 
 	MetricEnabled                       bool
 	MetricReportInterval                int
@@ -72,6 +73,7 @@ func initApmVariables() {
 	StorageBloomFpRate = GetValue("taskConfig.apmPreCalculate.storage.bloom.fpRate", 0.01)
 	StorageBloomAutoClean = GetValue("taskConfig.apmPreCalculate.storage.bloom.autoClean", 24*60)
 	StorageBloomInitCap = GetValue("taskConfig.apmPreCalculate.storage.bloom.initCap", 1000*1000)
+	StorageBloomLayers = GetValue("taskConfig.apmPreCalculate.storage.bloom.layers", 5)
 
 	/*
 	   Metric Config

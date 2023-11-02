@@ -65,6 +65,7 @@ func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
 				storage.BloomFpRate(config.StorageBloomFpRate),
 				storage.BloomAutoClean(config.StorageBloomAutoClean),
 				storage.InitCap(config.StorageBloomInitCap),
+				storage.LayerBloomConfig(storage.Layers(config.StorageBloomLayers)),
 			),
 			storage.SaveReqBufferSize(config.StorageSaveRequestBufferSize),
 		).

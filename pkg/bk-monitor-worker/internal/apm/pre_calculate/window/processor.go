@@ -74,36 +74,17 @@ type Processor struct {
 }
 
 func (p *Processor) PreProcess(receiver chan<- storage.SaveRequest, event Event) {
-	bloomKey, err := p.getBloomKey(event.TraceId)
+	exist, err := p.proxy.Exist(storage.ExistRequest{Target: storage.BloomFilter, Key: event.TraceId})
 	if err != nil {
-		p.logger.Warnf("failed to get filter key, this traceId: %s will be process as a new window. error: %s", event.TraceId, err)
+		p.logger.Warnf("Attempt to retrieve traceMeta from Bloom-filter failed, this traceId: %s will be process as a new window. error: %s", event.TraceId, err)
 		p.Process(receiver, event)
 	} else {
-		exist, err := p.proxy.Exist(storage.ExistRequest{Target: storage.BloomFilter, Key: bloomKey})
-		if err != nil {
-			p.logger.Warnf("Attempt to retrieve traceMeta from Bloom-filter failed, this traceId: %s will be process as a new window. error: %s", event.TraceId, err)
-			p.Process(receiver, event)
-		} else {
-			if exist {
-				existSpans := p.listSpanFromStorage(event)
-				p.revertToCollect(&event, existSpans)
-			}
-			p.Process(receiver, event)
+		if exist {
+			existSpans := p.listSpanFromStorage(event)
+			p.revertToCollect(&event, existSpans)
 		}
+		p.Process(receiver, event)
 	}
-
-}
-
-func (p *Processor) getBloomKey(traceId string) ([]byte, error) {
-
-	//h, err := highwayhash.New([]byte(core.HashSecret))
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//h.Write([]byte(traceId))
-	//return h.Sum(nil), nil
-	return []byte(traceId), nil
 }
 
 func (p *Processor) revertToCollect(event *Event, exists []*StandardSpan) {
@@ -312,16 +293,11 @@ func (p *Processor) sendStorageRequests(receiver chan<- storage.SaveRequest, res
 		}
 	}
 
-	bloomKey, err := p.getBloomKey(event.TraceId)
-	if err != nil {
-		p.logger.Warnf("failed to get filter key of bloom-filter, this trace will not be saved. error: %s", err)
-	} else {
-		receiver <- storage.SaveRequest{
-			Target: storage.BloomFilter,
-			Data: storage.BloomStorageData{
-				Key: bloomKey,
-			},
-		}
+	receiver <- storage.SaveRequest{
+		Target: storage.BloomFilter,
+		Data: storage.BloomStorageData{
+			Key: event.TraceId,
+		},
 	}
 
 	resultBytes, _ := jsoniter.Marshal(result)

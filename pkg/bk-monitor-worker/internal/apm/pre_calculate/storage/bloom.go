@@ -10,6 +10,9 @@
 package storage
 
 import (
+	"crypto/md5"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
+	"github.com/minio/highwayhash"
 	"time"
 
 	redisBloom "github.com/RedisBloom/redisbloom-go"
@@ -18,18 +21,20 @@ import (
 )
 
 type BloomStorageData struct {
-	Key []byte
+	Key string
 }
 
 type BloomOperator interface {
 	Add(BloomStorageData) error
-	Exist([]byte) (bool, error)
+	Exist(string) (bool, error)
 }
 
 type BloomOptions struct {
 	fpRate    float64
 	autoClean time.Duration
 	initCap   int
+
+	layersBloomOptions LayersBloomOptions
 }
 
 type BloomOption func(*BloomOptions)
@@ -52,6 +57,16 @@ func InitCap(s int) BloomOption {
 	}
 }
 
+func LayerBloomConfig(opts ...LayersBloomOption) BloomOption {
+	return func(options *BloomOptions) {
+		option := LayersBloomOptions{}
+		for _, setter := range opts {
+			setter(&option)
+		}
+		options.layersBloomOptions = option
+	}
+}
+
 type Bloom struct {
 	filterName string
 	config     BloomOptions
@@ -59,12 +74,12 @@ type Bloom struct {
 }
 
 func (b *Bloom) Add(data BloomStorageData) error {
-	_, err := b.c.Add(b.filterName, string(data.Key))
+	_, err := b.c.Add(b.filterName, data.Key)
 	return err
 }
 
-func (b *Bloom) Exist(k []byte) (bool, error) {
-	return b.c.Exists(b.filterName, string(k))
+func (b *Bloom) Exist(k string) (bool, error) {
+	return b.c.Exists(b.filterName, k)
 }
 
 func newRedisBloomClient(rConfig RedisCacheOptions, opts BloomOptions) (BloomOperator, error) {
@@ -84,32 +99,117 @@ type MemoryBloom struct {
 }
 
 func (m *MemoryBloom) Add(data BloomStorageData) error {
-	m.c.Add(data.Key)
+	m.c.Add([]byte(data.Key))
 	return nil
 }
 
-func (m *MemoryBloom) Exist(key []byte) (bool, error) {
-	return m.c.Test(key), nil
+func (m *MemoryBloom) Exist(key string) (bool, error) {
+	return m.c.Test([]byte(key)), nil
 }
 
 func (m *MemoryBloom) AutoReset() {
 	// Prevent the memory from being too large.
 	// Data will be cleared after a specified time.
-	logger.Infof("Bloom-filter will reset data every %s", m.config.autoClean)
+	logger.Infof("Bloom-filter will reset every %s", m.config.autoClean)
 	for {
-		logger.Infof("Next time the filter reset data is %s", m.nextCleanDate)
 		if time.Now().After(m.nextCleanDate) {
-			logger.Infof("Bloom-filter reset data trigger")
 			m.c = m.c.Reset()
 			m.nextCleanDate = time.Now().Add(m.cleanDuration)
+			logger.Infof("Bloom-filter reset data trigger, next time the filter reset data is %s", m.nextCleanDate)
 		}
 		time.Sleep(1 * time.Minute)
 	}
 }
 
 func newMemoryCacheBloomClient(options BloomOptions) (BloomOperator, error) {
-	sbf := boom.NewScalableBloomFilter(10000, options.fpRate, 0.8)
+	sbf := boom.NewScalableBloomFilter(uint(options.initCap), options.fpRate, 0.8)
 	bloom := &MemoryBloom{c: sbf, config: options, nextCleanDate: time.Now().Add(options.autoClean), cleanDuration: options.autoClean}
 	go bloom.AutoReset()
 	return bloom, nil
+}
+
+type LayersBloomOptions struct {
+	layers int
+}
+
+type LayersBloomOption func(*LayersBloomOptions)
+
+func Layers(s int) LayersBloomOption {
+	return func(options *LayersBloomOptions) {
+		if s > len(strategies) {
+			logger.Warnf("layer: %d > strategies count, set to %d", s, len(strategies))
+			s = len(strategies)
+		}
+		options.layers = s
+	}
+}
+
+type layerStrategy func(string) []byte
+
+var (
+	strategies = []layerStrategy{
+		// truncated 16
+		func(s string) []byte {
+			return []byte(s[16:])
+		},
+		// truncated 8
+		func(s string) []byte {
+			return []byte(s[24:])
+		},
+		// full
+		func(s string) []byte {
+			return []byte(s)
+		},
+		// md5
+		func(s string) []byte {
+			hash := md5.New()
+			hash.Write([]byte(s))
+			return hash.Sum(nil)
+		},
+		// hash
+		func(s string) []byte {
+			h, _ := highwayhash.New([]byte(core.HashSecret))
+			h.Write([]byte(s))
+			return h.Sum(nil)
+		},
+	}
+)
+
+type LayersMemoryBloom struct {
+	blooms     []*MemoryBloom
+	strategies []layerStrategy
+}
+
+func newLayersBloomClient(options BloomOptions) (BloomOperator, error) {
+	var blooms []*MemoryBloom
+
+	for i := 0; i < options.layersBloomOptions.layers; i++ {
+		sbf := boom.NewScalableBloomFilter(uint(options.initCap), options.fpRate, 0.8)
+		bloom := &MemoryBloom{c: sbf, config: options, nextCleanDate: time.Now().Add(options.autoClean), cleanDuration: options.autoClean}
+		go bloom.AutoReset()
+		blooms = append(blooms, bloom)
+	}
+
+	return &LayersMemoryBloom{blooms: blooms, strategies: strategies}, nil
+}
+
+func (l *LayersMemoryBloom) Add(data BloomStorageData) error {
+	for index, b := range l.blooms {
+		key := l.strategies[index](data.Key)
+		b.c.Add(key)
+	}
+	return nil
+}
+
+func (l *LayersMemoryBloom) Exist(originKey string) (bool, error) {
+
+	for index, b := range l.blooms {
+		key := l.strategies[index](originKey)
+		e := b.c.Test(key)
+		if !e {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }

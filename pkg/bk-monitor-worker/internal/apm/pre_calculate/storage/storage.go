@@ -38,7 +38,7 @@ type (
 
 	ExistRequest struct {
 		Target Target
-		Key    []byte
+		Key    string
 	}
 )
 
@@ -292,7 +292,7 @@ func NewProxyInstance(ctx context.Context, options ...ProxyOption) (*Proxy, erro
 	}
 
 	// todo 由于部署环境可能不支持redis-bloom 故统一使用内存方式进行
-	bloomFilter, err := newMemoryCacheBloomClient(opt.bloomConfig)
+	bloomFilter, err := newLayersBloomClient(opt.bloomConfig)
 	if err != nil {
 		return nil, err
 	}
