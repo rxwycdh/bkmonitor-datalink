@@ -30,6 +30,9 @@ var (
 	StorageBloomAutoClean                         int
 	StorageBloomInitCap                           int
 	StorageBloomLayers                            int
+	StorageBloomDecreaseCap                       int
+	StorageBloomDecreaseLayers                    int
+	StorageBloomDecreaseDivisor                   int
 
 	MetricEnabled                       bool
 	MetricReportInterval                int
@@ -74,6 +77,9 @@ func initApmVariables() {
 	StorageBloomAutoClean = GetValue("taskConfig.apmPreCalculate.storage.bloom.autoClean", 24*60)
 	StorageBloomInitCap = GetValue("taskConfig.apmPreCalculate.storage.bloom.initCap", 1000*1000)
 	StorageBloomLayers = GetValue("taskConfig.apmPreCalculate.storage.bloom.layers", 5)
+	StorageBloomDecreaseCap = GetValue("taskConfig.apmPreCalculate.storage.bloom.decreaseBloom.cap", 100000000)
+	StorageBloomDecreaseLayers = GetValue("taskConfig.apmPreCalculate.storage.bloom.decreaseBloom.layers", 10)
+	StorageBloomDecreaseDivisor = GetValue("taskConfig.apmPreCalculate.storage.bloom.decreaseBloom.divisor", 2)
 
 	/*
 	   Metric Config

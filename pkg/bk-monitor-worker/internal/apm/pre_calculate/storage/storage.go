@@ -113,8 +113,7 @@ func CacheRedisConfig(opts ...RedisCacheOption) ProxyOption {
 	}
 }
 
-// RedisBloomConfig If this configuration is used, redis must support redis-bloom.
-func RedisBloomConfig(opts ...BloomOption) ProxyOption {
+func BloomConfig(opts ...BloomOption) ProxyOption {
 	return func(options *ProxyOptions) {
 		bloomOpts := BloomOptions{}
 		for _, setter := range opts {
@@ -292,7 +291,7 @@ func NewProxyInstance(ctx context.Context, options ...ProxyOption) (*Proxy, erro
 	}
 
 	// todo 由于部署环境可能不支持redis-bloom 故统一使用内存方式进行
-	bloomFilter, err := newLayersBloomClient(opt.bloomConfig)
+	bloomFilter, err := newLayersCapDecreaseBloomClient(opt.bloomConfig)
 	if err != nil {
 		return nil, err
 	}

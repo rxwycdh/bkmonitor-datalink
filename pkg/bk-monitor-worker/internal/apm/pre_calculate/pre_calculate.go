@@ -61,11 +61,16 @@ func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
 				storage.RedisCacheDialTimeout(config.StorageRedisDialTimeout),
 				storage.RedisCacheReadTimeout(config.StorageRedisReadTimeout),
 			),
-			storage.RedisBloomConfig(
+			storage.BloomConfig(
 				storage.BloomFpRate(config.StorageBloomFpRate),
 				storage.BloomAutoClean(config.StorageBloomAutoClean),
 				storage.InitCap(config.StorageBloomInitCap),
 				storage.LayerBloomConfig(storage.Layers(config.StorageBloomLayers)),
+				storage.LayerCapDecreaseBloomConfig(
+					storage.CapDecreaseBloomCap(config.StorageBloomDecreaseCap),
+					storage.CapDecreaseBloomLayers(config.StorageBloomDecreaseLayers),
+					storage.CapDecreaseBloomDivisor(config.StorageBloomDecreaseDivisor),
+				),
 			),
 			storage.SaveReqBufferSize(config.StorageSaveRequestBufferSize),
 		).

@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	boom "github.com/tylertreat/BoomFilters"
 	"testing"
+	"time"
 )
 
 func TestExists(t *testing.T) {
@@ -68,4 +69,19 @@ func TestKeyBase64(t *testing.T) {
 
 	fmt.Println("Original string:", originalStr)
 	fmt.Println("Shortened string:", encodedStr, "len", len(encodedStr))
+}
+
+func TestNormalBloom(t *testing.T) {
+	var blooms []boom.Filter
+
+	sbf := boom.NewBloomFilter(uint(10000000000), 0.01)
+	bloom1 := newBloomClient(sbf, func() { sbf.Reset() }, BloomOptions{autoClean: time.Hour})
+	bloom2 := newBloomClient(sbf, func() { sbf.Reset() }, BloomOptions{autoClean: time.Hour})
+	blooms = append(blooms, bloom1)
+	blooms = append(blooms, bloom2)
+
+	for index, b := range blooms {
+		b.Add([]byte("b55ad0120589eb93716f5e3e3bd2244e"))
+		fmt.Println(index, " exist -> ", b.Test([]byte("b55ad0120589eb93716f5e3e3bd2244e")))
+	}
 }
