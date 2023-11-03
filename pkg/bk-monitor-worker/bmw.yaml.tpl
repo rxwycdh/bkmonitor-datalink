@@ -111,8 +111,16 @@ taskConfig:
         saveHoldMaxDuration: 500
         bloom:
           fpRate: 0.01
-          autoClean: 1440
-          layers: 5
+          normal:
+            autoClean: 1440
+          normalOverlap:
+            resetDuration: 120
+          layersBloom:
+            layers: 5
+          decreaseBloom:
+            cap: 100000000
+            layers: 10
+            divisor: 2
     metrics:
       enabled: false
       profile:

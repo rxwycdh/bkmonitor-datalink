@@ -27,9 +27,9 @@ var (
 	StorageSaveHoldMaxCount                       int
 	StorageSaveHoldMaxDuration                    int
 	StorageBloomFpRate                            float64
-	StorageBloomAutoClean                         int
-	StorageBloomInitCap                           int
-	StorageBloomLayers                            int
+	StorageBloomNormalAutoClean                   int
+	StorageBloomNormalOverlapResetDuration        int
+	StorageBloomLayersBloomLayers                 int
 	StorageBloomDecreaseCap                       int
 	StorageBloomDecreaseLayers                    int
 	StorageBloomDecreaseDivisor                   int
@@ -73,10 +73,11 @@ func initApmVariables() {
 	StorageWorkerCount = GetValue("taskConfig.apmPreCalculate.storage.workerCount", 10)
 	StorageSaveHoldMaxCount = GetValue("taskConfig.apmPreCalculate.storage.saveHoldMaxCount", 1000)
 	StorageSaveHoldMaxDuration = GetValue("taskConfig.apmPreCalculate.storage.saveHoldMaxDuration", 500)
+
 	StorageBloomFpRate = GetValue("taskConfig.apmPreCalculate.storage.bloom.fpRate", 0.01)
-	StorageBloomAutoClean = GetValue("taskConfig.apmPreCalculate.storage.bloom.autoClean", 24*60)
-	StorageBloomInitCap = GetValue("taskConfig.apmPreCalculate.storage.bloom.initCap", 1000*1000)
-	StorageBloomLayers = GetValue("taskConfig.apmPreCalculate.storage.bloom.layers", 5)
+	StorageBloomNormalAutoClean = GetValue("taskConfig.apmPreCalculate.storage.bloom.normal.autoClean", 24*60)
+	StorageBloomNormalOverlapResetDuration = GetValue("taskConfig.apmPreCalculate.storage.bloom.normalOverlap.resetDuration", 2*60)
+	StorageBloomLayersBloomLayers = GetValue("taskConfig.apmPreCalculate.storage.bloom.layersBloom.layers", 5)
 	StorageBloomDecreaseCap = GetValue("taskConfig.apmPreCalculate.storage.bloom.decreaseBloom.cap", 100000000)
 	StorageBloomDecreaseLayers = GetValue("taskConfig.apmPreCalculate.storage.bloom.decreaseBloom.layers", 10)
 	StorageBloomDecreaseDivisor = GetValue("taskConfig.apmPreCalculate.storage.bloom.decreaseBloom.divisor", 2)

@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	boom "github.com/tylertreat/BoomFilters"
 	"testing"
-	"time"
 )
 
 func TestExists(t *testing.T) {
@@ -75,8 +74,8 @@ func TestNormalBloom(t *testing.T) {
 	var blooms []boom.Filter
 
 	sbf := boom.NewBloomFilter(uint(10000000000), 0.01)
-	bloom1 := newBloomClient(sbf, func() { sbf.Reset() }, BloomOptions{autoClean: time.Hour})
-	bloom2 := newBloomClient(sbf, func() { sbf.Reset() }, BloomOptions{autoClean: time.Hour})
+	bloom1 := newBloomClient(sbf, func() { sbf.Reset() }, BloomOptions{})
+	bloom2 := newBloomClient(sbf, func() { sbf.Reset() }, BloomOptions{})
 	blooms = append(blooms, bloom1)
 	blooms = append(blooms, bloom2)
 

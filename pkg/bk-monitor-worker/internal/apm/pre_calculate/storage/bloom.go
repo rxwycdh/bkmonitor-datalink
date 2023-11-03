@@ -10,9 +10,11 @@
 package storage
 
 import (
+	"context"
 	"crypto/md5"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 	"github.com/minio/highwayhash"
+	"sync"
 	"time"
 
 	redisBloom "github.com/RedisBloom/redisbloom-go"
@@ -30,10 +32,10 @@ type BloomOperator interface {
 }
 
 type BloomOptions struct {
-	fpRate    float64
-	autoClean time.Duration
-	initCap   int
+	fpRate float64
 
+	normalMemoryBloomOptions      MemoryBloomOptions
+	normalOverlapBloomOptions     OverlapBloomOptions
 	layersBloomOptions            LayersBloomOptions
 	layersCapDecreaseBloomOptions LayersCapDecreaseBloomOptions
 }
@@ -45,36 +47,40 @@ func BloomFpRate(s float64) BloomOption {
 		options.fpRate = s
 	}
 }
-
-func BloomAutoClean(s int) BloomOption {
+func NormalMemoryBloomConfig(opts ...MemoryBloomOption) BloomOption {
 	return func(options *BloomOptions) {
-		options.autoClean = time.Duration(s) * time.Minute
-	}
-}
-
-func InitCap(s int) BloomOption {
-	return func(options *BloomOptions) {
-		options.initCap = s
-	}
-}
-
-func LayerBloomConfig(opts ...LayersBloomOption) BloomOption {
-	return func(options *BloomOptions) {
-		option := LayersBloomOptions{}
+		opt := MemoryBloomOptions{}
 		for _, setter := range opts {
-			setter(&option)
+			setter(&opt)
 		}
-		options.layersBloomOptions = option
+		options.normalMemoryBloomOptions = opt
 	}
 }
-
-func LayerCapDecreaseBloomConfig(opts ...LayersCapDecreaseBloomOption) BloomOption {
+func NormalOverlapMemoryBloomConfig(opts ...OverlapBloomOption) BloomOption {
 	return func(options *BloomOptions) {
-		option := LayersCapDecreaseBloomOptions{}
+		opt := OverlapBloomOptions{}
 		for _, setter := range opts {
-			setter(&option)
+			setter(&opt)
 		}
-		options.layersCapDecreaseBloomOptions = option
+		options.normalOverlapBloomOptions = opt
+	}
+}
+func LayersBloomConfig(opts ...LayersBloomOption) BloomOption {
+	return func(options *BloomOptions) {
+		opt := LayersBloomOptions{}
+		for _, setter := range opts {
+			setter(&opt)
+		}
+		options.layersBloomOptions = opt
+	}
+}
+func LayersCapDecreaseBloomConfig(opts ...LayersCapDecreaseBloomOption) BloomOption {
+	return func(options *BloomOptions) {
+		opt := LayersCapDecreaseBloomOptions{}
+		for _, setter := range opts {
+			setter(&opt)
+		}
+		options.layersCapDecreaseBloomOptions = opt
 	}
 }
 
@@ -102,8 +108,20 @@ func newRedisBloomClient(rConfig RedisCacheOptions, opts BloomOptions) (BloomOpe
 	return &Bloom{filterName: "traceMeta", config: opts, c: c}, nil
 }
 
+type MemoryBloomOptions struct {
+	autoClean time.Duration
+}
+
+type MemoryBloomOption func(*MemoryBloomOptions)
+
+func MemoryBloomAutoClean(c int) MemoryBloomOption {
+	return func(options *MemoryBloomOptions) {
+		options.autoClean = time.Duration(c) * time.Minute
+	}
+}
+
 type MemoryBloom struct {
-	config        BloomOptions
+	config        MemoryBloomOptions
 	c             boom.Filter
 	nextCleanDate time.Time
 	cleanDuration time.Duration
@@ -136,16 +154,139 @@ func (m *MemoryBloom) AutoReset() {
 	}
 }
 
+// newBloomClient base on boom.Filter, support for outer filter as param
 func newBloomClient(f boom.Filter, resetFunc func(), options BloomOptions) boom.Filter {
 	bloom := &MemoryBloom{
 		c:             f,
-		config:        options,
-		nextCleanDate: time.Now().Add(options.autoClean),
-		cleanDuration: options.autoClean,
+		config:        options.normalMemoryBloomOptions,
+		nextCleanDate: time.Now().Add(options.normalMemoryBloomOptions.autoClean),
+		cleanDuration: options.normalMemoryBloomOptions.autoClean,
 		resetFunc:     resetFunc,
 	}
 	go bloom.AutoReset()
 	return bloom
+}
+
+type OverlapBloomOptions struct {
+	resetDuration time.Duration
+}
+
+type OverlapBloomOption func(*OverlapBloomOptions)
+
+func OverlapBloomResetDuration(d int) OverlapBloomOption {
+	return func(options *OverlapBloomOptions) {
+		options.resetDuration = time.Duration(d) * time.Minute
+	}
+}
+
+type BloomChain struct {
+	front boom.Filter
+	after boom.Filter
+}
+
+// OverlapBloom time-overlap bloom, base on boom.Filter
+type OverlapBloom struct {
+	bloomChain BloomChain
+	cap        uint
+	fpRate     float64
+
+	config BloomOptions
+	ctx    context.Context
+	cancel context.CancelFunc
+	lock   sync.Mutex
+}
+
+func (m *OverlapBloom) Add(data []byte) boom.Filter {
+	m.bloomChain.front.Add(data)
+	if m.bloomChain.after != nil {
+		m.bloomChain.after.Add(data)
+	}
+	return m
+}
+
+func (m *OverlapBloom) Test(key []byte) bool {
+	return m.bloomChain.front.Test(key)
+}
+
+func (m *OverlapBloom) TestAndAdd(key []byte) bool {
+	r := m.bloomChain.front.TestAndAdd(key)
+	if m.bloomChain.after != nil {
+		m.bloomChain.after.TestAndAdd(key)
+	}
+	return r
+}
+
+func (m *OverlapBloom) AddOverlap() {
+
+	intervalTicker := time.NewTicker(m.config.normalOverlapBloomOptions.resetDuration / 2)
+	logger.Infof("overlap bloom add overlap interval: %s", m.config.normalOverlapBloomOptions.resetDuration/2)
+
+	for {
+		select {
+		case <-intervalTicker.C:
+			logger.Infof("add overlap trigger")
+			for {
+				m.lock.Lock()
+				logger.Infof("add overlap get lock")
+				if m.bloomChain.after != nil {
+					logger.Infof("add overlap release lock via after not null")
+					m.lock.Unlock()
+					time.Sleep(time.Second)
+					continue
+				}
+				m.bloomChain.after = boom.NewBloomFilter(m.cap, m.fpRate)
+				logger.Infof("add overlap release lock，after is created")
+				// changed to interleaved execution
+				intervalTicker = time.NewTicker(m.config.normalOverlapBloomOptions.resetDuration)
+				m.lock.Unlock()
+				break
+			}
+		case <-m.ctx.Done():
+			return
+		}
+	}
+}
+
+func (m *OverlapBloom) AutoReset() {
+	intervalTicker := time.NewTicker(m.config.normalOverlapBloomOptions.resetDuration)
+	logger.Infof("overlap bloom reset interval: %s", m.config.normalOverlapBloomOptions.resetDuration)
+
+	for {
+		select {
+		case <-intervalTicker.C:
+			logger.Debugf("auto reset trigger")
+			m.lock.Lock()
+			logger.Debugf("auto reset get lock")
+			m.bloomChain.front = m.bloomChain.after
+			m.bloomChain.after = nil
+			logger.Debugf("auto reset release lock, move after to front, set after = null")
+			m.lock.Unlock()
+		case <-m.ctx.Done():
+			return
+		}
+	}
+}
+
+func (m *OverlapBloom) Close() {
+	m.cancel()
+}
+
+func newOverlapBloomClient(f boom.Filter, cap uint, fpRate float64, options BloomOptions) boom.Filter {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	bloom := OverlapBloom{
+		bloomChain: BloomChain{front: f},
+		config:     options,
+		cap:        cap,
+		fpRate:     fpRate,
+		ctx:        ctx,
+		cancel:     cancel,
+	}
+
+	go bloom.AddOverlap()
+	go bloom.AutoReset()
+
+	return &bloom
 }
 
 type LayersBloomOptions struct {
@@ -195,6 +336,26 @@ var (
 	}
 )
 
+func LayerBloomConfig(opts ...LayersBloomOption) BloomOption {
+	return func(options *BloomOptions) {
+		option := LayersBloomOptions{}
+		for _, setter := range opts {
+			setter(&option)
+		}
+		options.layersBloomOptions = option
+	}
+}
+
+func LayerCapDecreaseBloomConfig(opts ...LayersCapDecreaseBloomOption) BloomOption {
+	return func(options *BloomOptions) {
+		option := LayersCapDecreaseBloomOptions{}
+		for _, setter := range opts {
+			setter(&option)
+		}
+		options.layersCapDecreaseBloomOptions = option
+	}
+}
+
 type LayersMemoryBloom struct {
 	blooms     []boom.Filter
 	strategies []layerStrategy
@@ -204,7 +365,7 @@ func newLayersBloomClient(options BloomOptions) (BloomOperator, error) {
 	var blooms []boom.Filter
 
 	for i := 0; i < options.layersBloomOptions.layers; i++ {
-		sbf := boom.NewScalableBloomFilter(uint(options.initCap), options.fpRate, 0.8)
+		sbf := boom.NewScalableBloomFilter(uint(options.layersBloomOptions.layers), options.fpRate, 0.8)
 		bloom := newBloomClient(sbf, func() { sbf.Reset() }, options)
 		blooms = append(blooms, bloom)
 	}
@@ -272,7 +433,8 @@ func newLayersCapDecreaseBloomClient(options BloomOptions) (BloomOperator, error
 	curCap := options.layersCapDecreaseBloomOptions.cap
 	for i := 0; i < options.layersCapDecreaseBloomOptions.layers; i++ {
 		sbf := boom.NewBloomFilter(uint(curCap), options.fpRate)
-		bloom := newBloomClient(sbf, func() { sbf.Reset() }, options)
+		// newOverlapBloomClient or newBloomClient
+		bloom := newOverlapBloomClient(sbf, uint(curCap), options.fpRate, options)
 		blooms = append(blooms, bloom)
 		curCap = curCap / options.layersCapDecreaseBloomOptions.divisor
 	}

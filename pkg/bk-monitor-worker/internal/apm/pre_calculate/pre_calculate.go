@@ -63,9 +63,13 @@ func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
 			),
 			storage.BloomConfig(
 				storage.BloomFpRate(config.StorageBloomFpRate),
-				storage.BloomAutoClean(config.StorageBloomAutoClean),
-				storage.InitCap(config.StorageBloomInitCap),
-				storage.LayerBloomConfig(storage.Layers(config.StorageBloomLayers)),
+				storage.NormalMemoryBloomConfig(
+					storage.MemoryBloomAutoClean(config.StorageBloomNormalAutoClean),
+				),
+				storage.NormalOverlapMemoryBloomConfig(
+					storage.OverlapBloomResetDuration(config.StorageBloomNormalOverlapResetDuration),
+				),
+				storage.LayerBloomConfig(storage.Layers(config.StorageBloomLayersBloomLayers)),
 				storage.LayerCapDecreaseBloomConfig(
 					storage.CapDecreaseBloomCap(config.StorageBloomDecreaseCap),
 					storage.CapDecreaseBloomLayers(config.StorageBloomDecreaseLayers),
