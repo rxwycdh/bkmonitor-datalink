@@ -38,6 +38,7 @@ var (
 	MetricReportInterval                int
 	ProfileEnabled                      bool
 	ProfileHost                         string
+	ProfileAppIdx                       string
 	MetricReportHost                    string
 	SaveRequestCountMetricDataId        int
 	SaveRequestCountMetricAccessToken   string
@@ -89,6 +90,7 @@ func initApmVariables() {
 	MetricReportInterval = GetValue("taskConfig.apmPreCalculate.metrics.reportInterval", 1000)
 	ProfileEnabled = GetValue("taskConfig.apmPreCalculate.metrics.profile.enabled", false)
 	ProfileHost = GetValue("taskConfig.apmPreCalculate.metrics.profile.host", "")
+	ProfileAppIdx = GetValue("taskConfig.apmPreCalculate.metrics.profile.appIdx", "")
 	MetricReportHost = GetValue("taskConfig.apmPreCalculate.metrics.reportHost", "")
 	SaveRequestCountMetricDataId = GetValue("taskConfig.apmPreCalculate.metrics.saveRequestChanCount.dataId", 0)
 	SaveRequestCountMetricAccessToken = GetValue("taskConfig.apmPreCalculate.metrics.saveRequestChanCount.accessToken", "")

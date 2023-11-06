@@ -83,6 +83,7 @@ func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
 			EnabledMetricReportInterval(config.MetricReportInterval),
 			EnabledProfile(config.ProfileEnabled),
 			ProfileAddress(config.ProfileHost),
+			ProfileAppIdx(config.ProfileAppIdx),
 			ReportHost(config.MetricReportHost),
 			SaveRequestCountMetric(config.SaveRequestCountMetricDataId, config.SaveRequestCountMetricAccessToken),
 			MessageChanCountMetric(config.MessageCountMetricDataId, config.MessageCountMetricAccessToken),

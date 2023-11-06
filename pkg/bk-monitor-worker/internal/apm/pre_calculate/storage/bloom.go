@@ -224,18 +224,18 @@ func (m *OverlapBloom) AddOverlap() {
 	for {
 		select {
 		case <-intervalTicker.C:
-			logger.Infof("add overlap trigger")
+			logger.Debugf("add overlap trigger")
 			for {
 				m.lock.Lock()
-				logger.Infof("add overlap get lock")
+				logger.Debugf("add overlap get lock")
 				if m.bloomChain.after != nil {
-					logger.Infof("add overlap release lock via after not null")
+					logger.Debugf("add overlap release lock via after not null")
 					m.lock.Unlock()
 					time.Sleep(time.Second)
 					continue
 				}
 				m.bloomChain.after = boom.NewBloomFilter(m.cap, m.fpRate)
-				logger.Infof("add overlap release lock，after is created")
+				logger.Debugf("add overlap release lock，after is created")
 				// changed to interleaved execution
 				intervalTicker = time.NewTicker(m.config.normalOverlapBloomOptions.resetDuration)
 				m.lock.Unlock()

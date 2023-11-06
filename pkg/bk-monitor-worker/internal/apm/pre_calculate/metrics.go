@@ -11,6 +11,7 @@ package pre_calculate
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
 type metricConfig struct {
@@ -50,6 +52,7 @@ type MetricOptions struct {
 	enabledProfile bool
 	interval       time.Duration
 	profileAddress string
+	profileAppIdx  string
 }
 
 func ReportHost(h string) MetricOption {
@@ -79,6 +82,17 @@ func EnabledProfile(e bool) MetricOption {
 func ProfileAddress(h string) MetricOption {
 	return func(options *MetricOptions) {
 		options.profileAddress = h
+	}
+}
+
+func ProfileAppIdx(h string) MetricOption {
+	return func(options *MetricOptions) {
+		if h != "" {
+			options.profileAppIdx = h
+		}
+		defaultV := "apm_precalculate"
+		logger.Infof("profile appIdx is not specified, %s is used as the default", defaultV)
+		options.profileAppIdx = defaultV
 	}
 }
 
@@ -158,7 +172,7 @@ func (r *MetricCollector) StartReport(runIns *RunInstance) {
 		}
 
 		if r.enabledProfile {
-			r.startProfiling(runIns.dataId)
+			r.startProfiling(runIns.dataId, r.profileAppIdx)
 		} else {
 			apmLogger.Infof("Profiling disabled.")
 		}
@@ -375,9 +389,9 @@ func (r *MetricCollector) ReportToServer(m metric, v int, dimension map[string]s
 	}(resp.Body)
 }
 
-func (r *MetricCollector) startProfiling(dataId string) {
+func (r *MetricCollector) startProfiling(dataId, appIdx string) {
 
-	n := "apm_precalculate"
+	n := fmt.Sprintf("apm_precalculate-%s", appIdx)
 	_, err := pyroscope.Start(pyroscope.Config{
 		ApplicationName: n,
 		ServerAddress:   r.profileAddress,
