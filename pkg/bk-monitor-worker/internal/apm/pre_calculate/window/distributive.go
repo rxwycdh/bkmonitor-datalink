@@ -239,7 +239,9 @@ type distributiveSubWindow struct {
 	processor            Processor
 	writeSaveRequestChan chan<- storage.SaveRequest
 
-	m      *sync.Map
+	m     *sync.Map
+	mLock sync.Mutex
+
 	ctx    context.Context
 	logger monitorLogger.Logger
 }
@@ -289,12 +291,14 @@ func (d *distributiveSubWindow) detectNotify() {
 
 	if len(expiredKeys) > 0 {
 		for _, k := range expiredKeys {
+			d.mLock.Lock()
 			v, exists := d.m.Load(k)
 			if !exists {
 				d.logger.Errorf("An expired key[%s] was detected but does not exist in the mapping", k)
 				continue
 			}
 			d.m.Delete(k)
+			d.mLock.Unlock()
 			d.eventChan <- Event{v.(*CollectTrace)}
 		}
 	}

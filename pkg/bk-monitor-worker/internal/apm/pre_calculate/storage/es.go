@@ -41,8 +41,7 @@ var (
 		if resMap == nil {
 			return nil, nil
 		}
-		r, _ := jsoniter.Marshal(resMap)
-		return r, nil
+		return jsoniter.Marshal(resMap)
 	}
 
 	AggsCountConvert Converter = func(body io.ReadCloser) (any, error) {
@@ -135,12 +134,12 @@ func (e *esStorage) Save(data EsStorageData) error {
 	buf := bytes.NewBuffer(data.Value)
 	req := esapi.IndexRequest{Index: e.getSaveIndexName(e.indexName), DocumentID: data.DocumentId, Body: buf}
 	res, err := req.Do(context.Background(), e.client)
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
+	defer func() {
+		err = res.Body.Close()
 		if err != nil {
 			logger.Warnf("failed to close the body")
 		}
-	}(res.Body)
+	}()
 
 	if err != nil {
 		return err
@@ -199,12 +198,12 @@ func (e *esStorage) Query(data any) (any, error) {
 		return nil, err
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
+	defer func() {
+		err = res.Body.Close()
 		if err != nil {
 			logger.Warnf("failed to close the body")
 		}
-	}(res.Body)
+	}()
 
 	if res.IsError() {
 		return nil, errors.New(res.String())

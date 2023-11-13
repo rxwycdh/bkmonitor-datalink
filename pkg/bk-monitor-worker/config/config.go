@@ -14,6 +14,7 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
+	"log"
 	"reflect"
 	"strings"
 )
@@ -287,7 +288,7 @@ func InitConfig() {
 	viper.SetConfigFile(FilePath)
 
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Errorf("Read config file:s error: %s", FilePath, err)
+		log.Fatalf("read config file: %s error: %s", FilePath, err)
 	}
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix(EnvKeyPrefix)

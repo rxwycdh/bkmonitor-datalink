@@ -34,9 +34,9 @@ const (
 type SpanStatusCode int
 
 const (
-	StatusCodeUnset SpanStatusCode = 0
-	StatusCodeOk    SpanStatusCode = 1
-	StatusCodeError SpanStatusCode = 2
+	StatusCodeUnset SpanStatusCode = iota
+	StatusCodeOk
+	StatusCodeError
 )
 
 type SpanKind int
