@@ -14,8 +14,8 @@ package redis
 import (
 	"context"
 	"fmt"
+	"log"
 	"math"
-	"sync"
 	"time"
 
 	redis "github.com/go-redis/redis/v8"
@@ -26,7 +26,6 @@ import (
 	task "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/errors"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/timex"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	redisUtils "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/register/redis"
 )
 
@@ -43,33 +42,34 @@ type RDB struct {
 
 var (
 	brokerInstance *RDB
-	brokerOnce     sync.Once
 )
 
-// GetRDB new a rdb client
+// GetRDB Get the redis broker client
 func GetRDB() *RDB {
-	brokerOnce.Do(func() {
-		client, err := redisUtils.NewRedisClient(
-			context.Background(),
-			&redisUtils.Option{
-				Mode:             config.BrokerRedisMode,
-				Host:             config.BrokerRedisStandaloneHost,
-				Port:             config.BrokerRedisStandalonePort,
-				Password:         config.BrokerRedisStandalonePassword,
-				SentinelAddress:  config.BrokerRedisSentinelAddress,
-				MasterName:       config.BrokerRedisSentinelMasterName,
-				SentinelPassword: config.BrokerRedisSentinelPassword,
-				Db:               config.BrokerRedisDatabase,
-				DialTimeout:      time.Duration(config.BrokerRedisDialTimeout) * time.Second,
-				ReadTimeout:      time.Duration(config.BrokerRedisReadTimeout) * time.Second,
-			},
-		)
-		if err != nil {
-			logger.Errorf("failed to create redisBroker, broker will not be available, error: %s", err)
-		}
-		brokerInstance = &RDB{client: client, clock: timex.NewTimeClock()}
-	})
+	if brokerInstance != nil {
+		return brokerInstance
+	}
 
+	client, err := redisUtils.NewRedisClient(
+		context.Background(),
+		&redisUtils.Option{
+			Mode:             config.BrokerRedisMode,
+			Host:             config.BrokerRedisStandaloneHost,
+			Port:             config.BrokerRedisStandalonePort,
+			Password:         config.BrokerRedisStandalonePassword,
+			SentinelAddress:  config.BrokerRedisSentinelAddress,
+			MasterName:       config.BrokerRedisSentinelMasterName,
+			SentinelPassword: config.BrokerRedisSentinelPassword,
+			Db:               config.BrokerRedisDatabase,
+			DialTimeout:      time.Duration(config.BrokerRedisDialTimeout) * time.Second,
+			ReadTimeout:      time.Duration(config.BrokerRedisReadTimeout) * time.Second,
+		},
+	)
+	if err != nil {
+		log.Fatalf("failed to create redis broker client, error: %s", err)
+	}
+
+	brokerInstance = &RDB{client: client, clock: timex.NewTimeClock()}
 	return brokerInstance
 }
 

@@ -86,8 +86,11 @@ func (p *PeriodicTaskScheduler) Run() {
 	}
 }
 
-func NewPeriodicTaskScheduler(ctx context.Context) *PeriodicTaskScheduler {
-	scheduler := worker.NewScheduler(ctx, worker.SchedulerOpts{})
+func NewPeriodicTaskScheduler(ctx context.Context) (*PeriodicTaskScheduler, error) {
+	scheduler, err := worker.NewScheduler(ctx, worker.SchedulerOpts{})
+	if err != nil {
+		return nil, err
+	}
 	taskMapping := GetPeriodicTaskMapping()
-	return &PeriodicTaskScheduler{scheduler: scheduler, fullTaskMapping: taskMapping, ctx: ctx}
+	return &PeriodicTaskScheduler{scheduler: scheduler, fullTaskMapping: taskMapping, ctx: ctx}, nil
 }

@@ -10,10 +10,10 @@
 package task
 
 import (
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"log"
 	"sync"
 
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	worker "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/worker"
 )
 
@@ -26,7 +26,10 @@ func Add(i int) {
 		config.InitConfig()
 	})
 
-	client := worker.GetClient()
+	client, err := worker.GetClient()
+	if err != nil {
+		log.Fatalf("failed to create client: %s", err)
+	}
 	defer client.Close()
 
 	task, err := NewAddTask(i)

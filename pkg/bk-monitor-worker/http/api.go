@@ -137,7 +137,10 @@ func composeOption(opt taskOptions) []task.Option {
 // 写入任务队列
 func enqueueAsyncTask(t *task.Task) error {
 	// new client
-	client := worker.GetClient()
+	client, err := worker.GetClient()
+	if err != nil {
+		return err
+	}
 	defer client.Close()
 
 	// 入队列
@@ -167,7 +170,7 @@ func pushPeriodicTaskToRedis(c *gin.Context, t *task.Task) error {
 
 // 推送任务到 task队列中
 func enqueueDaemonTask(t *task.Task) error {
-	client := rdb.GetRDB().Client()
+	broker := rdb.GetRDB()
 
 	serializerTask, err := task.NewSerializerTask(*t)
 	if err != nil {
@@ -178,7 +181,7 @@ func enqueueDaemonTask(t *task.Task) error {
 		return err
 	}
 
-	return client.SAdd(context.Background(), common.DaemonTaskKey(), data).Err()
+	return broker.Client().SAdd(context.Background(), common.DaemonTaskKey(), data).Err()
 }
 
 func RemoveAllTask(c *gin.Context) {
@@ -190,8 +193,8 @@ func RemoveAllTask(c *gin.Context) {
 
 	switch params.TaskType {
 	case DaemonTask:
-		client := rdb.GetRDB().Client()
-		_, err := client.Del(context.Background(), common.DaemonTaskKey()).Result()
+		broker := rdb.GetRDB()
+		_, err := broker.Client().Del(context.Background(), common.DaemonTaskKey()).Result()
 		if err != nil {
 			ServerErrResponse(c, fmt.Sprintf("failed to delete key: %s.", common.DaemonTaskKey()), err)
 			return
@@ -213,8 +216,8 @@ func RemoveTask(c *gin.Context) {
 
 	switch params.TaskType {
 	case DaemonTask:
-		client := rdb.GetRDB().Client()
-		tasks, err := client.SMembers(context.Background(), common.DaemonTaskKey()).Result()
+		client := rdb.GetRDB()
+		tasks, err := client.Client().SMembers(context.Background(), common.DaemonTaskKey()).Result()
 		if err != nil {
 			ServerErrResponse(c, fmt.Sprintf("failed to list task by key: %s.", common.DaemonTaskKey()), err)
 			return
@@ -227,7 +230,7 @@ func RemoveTask(c *gin.Context) {
 			}
 			taskUniId := daemon.ComputeTaskUniId(item)
 			if taskUniId == params.TaskUniId {
-				client.SRem(context.Background(), common.DaemonTaskKey(), i)
+				client.Client().SRem(context.Background(), common.DaemonTaskKey(), i)
 				Response(c, &gin.H{"data": taskUniId})
 				return
 			}
@@ -245,8 +248,8 @@ func ListTask(c *gin.Context) {
 
 	switch taskType {
 	case DaemonTask:
-		client := rdb.GetRDB().Client()
-		tasks, err := client.SMembers(context.Background(), common.DaemonTaskKey()).Result()
+		client := rdb.GetRDB()
+		tasks, err := client.Client().SMembers(context.Background(), common.DaemonTaskKey()).Result()
 		if err != nil {
 			ServerErrResponse(c, fmt.Sprintf("failed to list task by key: %s.", common.DaemonTaskKey()), err)
 			return

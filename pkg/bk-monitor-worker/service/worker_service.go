@@ -65,8 +65,12 @@ func NewWorkerService(ctx context.Context, queues []string) (*WorkerService, err
 		logger.Errorf("Failed to create worker. error: %s", err)
 		return nil, err
 	}
+	maintainer, err := NewWorkerHealthMaintainer(ctx, queues)
+	if err != nil {
+		return nil, err
+	}
 
-	return &WorkerService{ctx: ctx, worker: w, mux: worker.NewServeMux(), maintainer: NewWorkerHealthMaintainer(ctx, queues)}, nil
+	return &WorkerService{ctx: ctx, worker: w, mux: worker.NewServeMux(), maintainer: maintainer}, nil
 }
 
 type MaintainerOptions struct {
@@ -109,20 +113,22 @@ func (w *WorkerHealthMaintainer) Start() {
 	}
 }
 
-func NewWorkerHealthMaintainer(ctx context.Context, queues []string) *WorkerHealthMaintainer {
+func NewWorkerHealthMaintainer(ctx context.Context, queues []string) (*WorkerHealthMaintainer, error) {
 
 	options := MaintainerOptions{
 		checkInternal: time.Duration(config.WorkerHealthCheckInterval) * time.Second,
 		infoTtl:       time.Duration(config.WorkerHealthCheckInfoDuration) * time.Second,
 	}
 
+	broker := rdb.GetRDB()
+
 	return &WorkerHealthMaintainer{
 		id:          commonUtils.GenerateProcessorId(),
 		ctx:         ctx,
 		config:      options,
-		redisClient: rdb.GetRDB().Client(),
+		redisClient: broker.Client(),
 		queues:      queues,
-	}
+	}, nil
 }
 
 type WorkerTaskMaintainer struct {

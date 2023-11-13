@@ -12,12 +12,13 @@ package cmd
 import (
 	"context"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/log"
+	workerLog "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/log"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/daemon"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/periodic"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	"github.com/spf13/cobra"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,19 +39,22 @@ func startTaskModule(cmd *cobra.Command, args []string) {
 	defer runtimex.HandleCrash()
 
 	config.InitConfig()
-	log.InitLogger()
+	workerLog.InitLogger()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// 1. 启动任务监听器
+	// 1. 任务监听器
 	taskWatcher := periodic.NewWatchService(ctx)
 	go taskWatcher.StartWatch()
 
-	// 2. 启动周期任务调度器
-	periodicTaskScheduler := periodic.NewPeriodicTaskScheduler(ctx)
+	// 2. 周期任务调度器
+	periodicTaskScheduler, err := periodic.NewPeriodicTaskScheduler(ctx)
+	if err != nil {
+		log.Fatalf("failed to create period task scheduler: %s", err)
+	}
 	go periodicTaskScheduler.Run()
 
-	// 3. 启动常驻任务调度器
+	// 3. 常驻任务调度器
 	daemonTaskScheduler := daemon.NewDaemonTaskScheduler(ctx)
 	go daemonTaskScheduler.Run()
 

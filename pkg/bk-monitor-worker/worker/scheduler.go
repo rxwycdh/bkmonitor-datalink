@@ -60,25 +60,30 @@ type SchedulerOpts struct {
 }
 
 // NewScheduler returns a new Scheduler
-func NewScheduler(ctx context.Context, opts SchedulerOpts) *Scheduler {
+func NewScheduler(ctx context.Context, opts SchedulerOpts) (*Scheduler, error) {
 
 	// 如果不指定，则使用 utc 时间
 	loc := opts.Location
 	if loc == nil {
 		loc = time.UTC
 	}
+	broker := redis.GetRDB()
+	client, err := GetClient()
+	if err != nil {
+		return nil, err
+	}
 
 	return &Scheduler{
 		id:         commonUtils.GenerateProcessorId(),
-		client:     GetClient(),
-		rdb:        redis.GetRDB(),
+		client:     client,
+		rdb:        broker,
 		cron:       cron.New(cron.WithLocation(loc)),
 		location:   loc,
 		done:       make(chan struct{}),
 		errHandler: opts.EnqueueErrorHandler,
 		idmap:      make(map[string]cron.EntryID),
 		ctx:        ctx,
-	}
+	}, nil
 }
 
 // enqueueJob encapsulates the job of enqueuing a task and recording the event.
