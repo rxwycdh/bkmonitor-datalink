@@ -54,7 +54,7 @@ func (e *Event) SetDimensionList(dimensionList []string) error {
 	return nil
 }
 
-// TableName: 用于设置表的别名
+// TableName : 用于设置表的别名
 func (Event) TableName() string {
 	return "metadata_event"
 }
@@ -123,10 +123,15 @@ func (e Event) ModifyEventList(eventInfoList map[string][]string) error {
 			eventObj.LastModifyTime = time.Now()
 			err := eventObj.SetDimensionList(mergedDimensionList)
 			if err != nil {
-				logger.Errorf("update dimension list [%s] for [%s] [%s] error: %s", dimensionList, e.EventID, eventObj.EventName, err)
+				logger.Errorf(
+					"update dimension list [%s] for [%s] [%s] error: %s",
+					dimensionList, e.EventID, eventObj.EventName, err,
+				)
 				return
 			}
-			err = eventObj.Update(dbSession.DB, EventDBSchema.EventName, EventDBSchema.DimensionList, EventDBSchema.LastModifyTime)
+			err = eventObj.Update(
+				dbSession.DB, EventDBSchema.EventName, EventDBSchema.DimensionList, EventDBSchema.LastModifyTime,
+			)
 			if err != nil {
 				logger.Errorf("create event [%s] for [%s] error: %s", eventObj.EventName, e.EventID, err)
 				return

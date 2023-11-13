@@ -54,7 +54,11 @@ type RunMaintainer struct {
 }
 
 func (r *RunMaintainer) Run() {
-	logger.Infof("\nDaemonTask maintainer started. \n - \t workerId: %s \n - \t listen: %s \n - \t queue: %s \n - \t interval: %s", r.listenWorkerId, r.listenWorkerId, r.listenTaskKey, r.config.checkInterval)
+	logger.Infof(
+		"\nDaemonTask maintainer started. "+
+			"\n - \t workerId: %s \n - \t listen: %s \n - \t queue: %s \n - \t interval: %s",
+		r.listenWorkerId, r.listenWorkerId, r.listenTaskKey, r.config.checkInterval,
+	)
 	taskMarkMapping := make(map[string]bool)
 	for {
 		select {
@@ -71,7 +75,10 @@ func (r *RunMaintainer) Run() {
 			for taskUniId, taskStr := range taskHash {
 				var taskBinding TaskBinding
 				if err = jsoniter.Unmarshal([]byte(taskStr), &taskBinding); err != nil {
-					logger.Errorf("failed to parse value to TaskBinding on key: %s field: %s. error: %s", r.listenTaskKey, taskUniId, err)
+					logger.Errorf(
+						"failed to parse value to TaskBinding on key: %s field: %s. "+
+							"error: %s", r.listenTaskKey, taskUniId, err,
+					)
 					continue
 				}
 
@@ -136,7 +143,11 @@ func (r *RunMaintainer) listenRunningState(taskUniId string, errorReceiveChan ch
 			}
 			rB.nextRetryTime = time.Now().Add(nextRetryTime)
 			r.runningInstance.Store(taskUniId, rB)
-			logger.Warnf("[FAILED RETRY] ERROR: %s. Task: %s, %d retry failed. The retry time of the next attempt is: %s, (%.2f seconds later)", receiveErr, taskUniId, rB.retryCount, rB.nextRetryTime, nextRetryTime.Seconds())
+			logger.Warnf(
+				"[FAILED RETRY] ERROR: %s. Task: %s, %d retry failed. "+
+					"The retry time of the next attempt is: %s, (%.2f seconds later)",
+				receiveErr, taskUniId, rB.retryCount, rB.nextRetryTime, nextRetryTime.Seconds(),
+			)
 			retryTicker = time.NewTicker(nextRetryTime)
 		case <-retryTicker.C:
 			v, _ := r.runningInstance.Load(taskUniId)
@@ -170,7 +181,11 @@ func NewDaemonTaskRunMaintainer(ctx context.Context, workerId string) *RunMainta
 	for taskKind, define := range taskDefine {
 		op, err := define.initialFunc(ctx)
 		if err != nil {
-			logger.Errorf("[!WARNING!] Task: %s implementation initialization failed, this task type will not be executed! error: %s", taskKind, err)
+			logger.Errorf(
+				"[!WARNING!] Task: %s implementation initialization failed, "+
+					"this task type will not be executed! error: %s",
+				taskKind, err,
+			)
 			continue
 		}
 		operatorMapping[taskKind] = op

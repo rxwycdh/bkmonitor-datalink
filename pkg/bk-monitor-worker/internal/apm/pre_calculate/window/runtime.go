@@ -121,7 +121,11 @@ type ConfigBaseRuntimeStrategies struct {
 }
 
 func NewRuntimeStrategies(c RuntimeConfig, reentrantStrategies []ReentrantRuntimeStrategy, predicateStrategies []ReentrantRuntimeStrategy) *ConfigBaseRuntimeStrategies {
-	return &ConfigBaseRuntimeStrategies{config: c, reentrantStrategies: reentrantStrategies, predicateStrategies: predicateStrategies}
+	return &ConfigBaseRuntimeStrategies{
+		config:              c,
+		reentrantStrategies: reentrantStrategies,
+		predicateStrategies: predicateStrategies,
+	}
 }
 
 func (c *ConfigBaseRuntimeStrategies) handleExist(runtime *Runtime, collect CollectTrace) {

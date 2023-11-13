@@ -131,7 +131,10 @@ func (d *DefaultNumerator) checkTaskCorrect(
 		bindingWorkerStr, taskHasWorker := taskWorkerMapping[taskUniId]
 
 		if !taskHasWorker {
-			logger.Warnf("Task that was not had binding worker was found: taskKin: %s(taskUniId: %s)", taskInstance.Kind, taskUniId)
+			logger.Warnf(
+				"Task that was not had binding worker was found: taskKin: %s(taskUniId: %s)",
+				taskInstance.Kind, taskUniId,
+			)
 			expectAddTasks = append(expectAddTasks, taskInstance)
 		} else {
 			workerBinding, err := GetBinding().toWorkerBinding(bindingWorkerStr)
@@ -161,7 +164,10 @@ func (d *DefaultNumerator) listWorker() ([]service.WorkerInfo, error) {
 		bytesData, _ := d.redisClient.Get(d.ctx, key).Bytes()
 		var workerInfo service.WorkerInfo
 		if err = jsoniter.Unmarshal(bytesData, &workerInfo); err != nil {
-			return res, fmt.Errorf("failed to unmarshal value to WorkerInfo with key: %s(value: %s). error: %s", key, bytesData, err)
+			return res, fmt.Errorf(
+				"failed to unmarshal value to WorkerInfo with key: %s(value: %s). error: %s",
+				key, bytesData, err,
+			)
 		}
 
 		res = append(res, workerInfo)
@@ -200,7 +206,10 @@ func (d *DefaultNumerator) listBindingMapping(workers []service.WorkerInfo, task
 	for _, workerId := range workerIds {
 		workerTaskBindings, err := d.redisClient.HKeys(d.ctx, common.DaemonBindingWorker(workerId)).Result()
 		if err != nil {
-			return workerTaskMapping, taskWorkerMapping, fmt.Errorf("failed to obtain current binding tasks with workerIdKey: %s, error: %s", common.DaemonBindingWorker(workerId), err)
+			return workerTaskMapping, taskWorkerMapping, fmt.Errorf(
+				"failed to obtain current binding tasks with workerIdKey: %s, error: %s",
+				common.DaemonBindingWorker(workerId), err,
+			)
 		}
 
 		workerTaskMapping[workerId] = workerTaskBindings
@@ -210,12 +219,17 @@ func (d *DefaultNumerator) listBindingMapping(workers []service.WorkerInfo, task
 
 		exist, err := d.redisClient.HExists(d.ctx, common.DaemonBindingTask(), taskUniId).Result()
 		if err != nil {
-			return workerTaskMapping, taskWorkerMapping, fmt.Errorf("failed to obtain current binding worker with taskUniId: %s, error: %s", taskUniId, err)
+			return workerTaskMapping, taskWorkerMapping, fmt.Errorf(
+				"failed to obtain current binding worker with taskUniId: %s, error: %s", taskUniId, err,
+			)
 		}
 		if exist {
 			workerId, err := d.redisClient.HGet(d.ctx, common.DaemonBindingTask(), taskUniId).Result()
 			if err != nil {
-				return workerTaskMapping, taskWorkerMapping, fmt.Errorf("failed to obtain current workerId with taskUnidId on field: %s of key: %s. error: %s", taskUniId, common.DaemonBindingTask(), err)
+				return workerTaskMapping, taskWorkerMapping, fmt.Errorf(
+					"failed to obtain current workerId "+
+						"with taskUnidId on field: %s of key: %s. error: %s",
+					taskUniId, common.DaemonBindingTask(), err)
 			}
 			if workerId != "" {
 				taskWorkerMapping[taskUniId] = workerId

@@ -11,14 +11,16 @@ package window
 
 import (
 	"context"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
-	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"github.com/cespare/xxhash/v2"
-	"go.uber.org/zap"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/cespare/xxhash/v2"
+	"go.uber.org/zap"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
+	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
 // DistributiveWindowOptions all configs
@@ -110,7 +112,9 @@ func NewDistributiveWindow(dataId string, ctx context.Context, processor Process
 	// Register sub-windows Event
 	subWindowMapping := make(map[int]*distributiveSubWindow, specificConfig.subWindowSize)
 	for i := 0; i < specificConfig.subWindowSize; i++ {
-		w := newDistributiveSubWindow(dataId, ctx, i, processor, window.saveRequestChan, specificConfig.concurrentExpirationMaximum)
+		w := newDistributiveSubWindow(
+			dataId, ctx, i, processor, window.saveRequestChan, specificConfig.concurrentExpirationMaximum,
+		)
 		subWindowMapping[i] = w
 		window.register(w)
 	}
@@ -142,7 +146,10 @@ func (w *DistributiveWindow) Start(spanChan <-chan []StandardSpan, errorReceiveC
 	}
 
 	go w.startWatch(errorReceiveChan)
-	w.logger.Infof("DataId: %s created with %d sub-window, %d concurrentProcessCount", w.dataId, len(w.observers), w.config.concurrentProcessCount)
+	w.logger.Infof(
+		"DataId: %s created with %d sub-window, %d concurrentProcessCount",
+		w.dataId, len(w.observers), w.config.concurrentProcessCount,
+	)
 
 	go w.Handle(spanChan, errorReceiveChan)
 	//for i := 0; i < w.config.messageConcurrentListener; i++ {

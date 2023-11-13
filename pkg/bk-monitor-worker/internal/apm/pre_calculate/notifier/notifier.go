@@ -11,12 +11,15 @@ package notifier
 
 import (
 	"context"
+	"sync"
+
+	"go.uber.org/zap"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
 	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"go.uber.org/zap"
-	"sync"
 )
 
+// Notifier interface for receive message, it is the data sources of window processing classes
 type Notifier interface {
 	Start(errorReceiveChan chan<- error)
 	Spans() <-chan []window.StandardSpan
@@ -25,7 +28,7 @@ type Notifier interface {
 // Options is configuration items for all notifier
 type Options struct {
 	// Configure for difference queue
-	KafkaConfig
+	kafkaConfig
 
 	ctx context.Context
 	// chanBufferSize The maximum amount of cached data in the queue
@@ -41,19 +44,21 @@ func BufferSize(s int) Option {
 	}
 }
 
+// Context ctx of notifier
 func Context(ctx context.Context) Option {
 	return func(options *Options) {
 		options.ctx = ctx
 	}
 }
 
-type NotifyForm int
+type notifyForm int
 
 const (
-	KafkaNotifier NotifyForm = 1 << iota
+	KafkaNotifier notifyForm = 1 << iota
 )
 
-func NewNotifier(form NotifyForm, options ...Option) Notifier {
+// NewNotifier create notifier
+func NewNotifier(form notifyForm, options ...Option) Notifier {
 
 	switch form {
 	case KafkaNotifier:
@@ -72,10 +77,12 @@ var (
 
 type emptyNotifier struct{}
 
+// Spans return empty chan
 func (e emptyNotifier) Spans() <-chan []window.StandardSpan {
 	return make(chan []window.StandardSpan, 0)
 }
 
+// Start empty
 func (e emptyNotifier) Start(_ chan<- error) {}
 
 func newEmptyNotifier() Notifier {

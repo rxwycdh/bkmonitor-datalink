@@ -38,7 +38,7 @@ import (
 //	viper.SetDefault(debugModePath, false)
 //}
 
-// DBSession
+// DBSession session of databases
 type DBSession struct {
 	DB *gorm.DB
 }

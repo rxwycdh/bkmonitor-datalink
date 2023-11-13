@@ -23,15 +23,18 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 )
 
+// BloomStorageData storage request of bloom-filter
 type BloomStorageData struct {
 	Key string
 }
 
+// BloomOperator interface of bloom-filter
 type BloomOperator interface {
 	Add(BloomStorageData) error
 	Exist(string) (bool, error)
 }
 
+// BloomOptions config of bloom-filter
 type BloomOptions struct {
 	fpRate float64
 
@@ -41,8 +44,10 @@ type BloomOptions struct {
 	layersCapDecreaseBloomOptions LayersCapDecreaseBloomOptions
 }
 
+// BloomOption configHandler of bloom-filter
 type BloomOption func(*BloomOptions)
 
+// BloomFpRate fpRate of bloom-filter
 func BloomFpRate(s float64) BloomOption {
 	return func(options *BloomOptions) {
 		options.fpRate = s

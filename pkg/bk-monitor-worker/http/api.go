@@ -184,6 +184,7 @@ func enqueueDaemonTask(t *task.Task) error {
 	return broker.Client().SAdd(context.Background(), common.DaemonTaskKey(), data).Err()
 }
 
+// RemoveAllTask 删除所有任务
 func RemoveAllTask(c *gin.Context) {
 	params := new(removeAllTaskParams)
 	if err := BindJSON(c, params); err != nil {
@@ -207,6 +208,7 @@ func RemoveAllTask(c *gin.Context) {
 	}
 }
 
+// RemoveTask 删除某个任务
 func RemoveTask(c *gin.Context) {
 	params := new(removeTaskParams)
 	if err := BindJSON(c, params); err != nil {
@@ -235,7 +237,10 @@ func RemoveTask(c *gin.Context) {
 				return
 			}
 		}
-		ServerErrResponse(c, fmt.Sprintf("failed to remove TaskUniId: %s, not found in key: %s", params.TaskUniId, common.DaemonTaskKey()))
+		ServerErrResponse(c, fmt.Sprintf(
+			"failed to remove TaskUniId: %s, not found in key: %s",
+			params.TaskUniId, common.DaemonTaskKey()),
+		)
 		return
 	default:
 		ServerErrResponse(c, fmt.Sprintf("Task remove not support type: %s", params.TaskType))
@@ -243,6 +248,7 @@ func RemoveTask(c *gin.Context) {
 	}
 }
 
+// ListTask 获取broker中的任务列表
 func ListTask(c *gin.Context) {
 	taskType := c.DefaultQuery("task_type", "empty")
 

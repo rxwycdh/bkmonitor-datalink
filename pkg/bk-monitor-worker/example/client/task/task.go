@@ -19,6 +19,7 @@ import (
 
 var once sync.Once
 
+// Add task enqueue test
 func Add(i int) {
 	once.Do(func() {
 		// init the config path

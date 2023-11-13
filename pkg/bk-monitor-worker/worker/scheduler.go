@@ -29,9 +29,8 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
+// Scheduler are safe for concurrent use by multiple goroutines.
 // A Scheduler kicks off tasks at regular intervals based on the user defined schedule.
-//
-// Schedulers are safe for concurrent use by multiple goroutines.
 type Scheduler struct {
 	id string
 

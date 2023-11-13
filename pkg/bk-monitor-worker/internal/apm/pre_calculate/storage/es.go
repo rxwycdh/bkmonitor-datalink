@@ -166,12 +166,12 @@ func (e *esStorage) SaveBatch(items []EsStorageData) error {
 		return err
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
+	defer func() {
+		err = response.Body.Close()
 		if err != nil {
 			logger.Warnf("failed to close the body")
 		}
-	}(response.Body)
+	}()
 
 	if response.IsError() {
 		return fmt.Errorf("bulk insert returned an abnormal status code： %d", response.StatusCode)

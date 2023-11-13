@@ -13,7 +13,6 @@ import (
 	"bytes"
 	"fmt"
 	"golang.org/x/exp/maps"
-	"io"
 	"net/http"
 	"time"
 
@@ -340,12 +339,12 @@ func ReportToServer(
 	if err != nil {
 		return fmt.Errorf("post request failed, error: %s", err)
 	}
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
+	defer func() {
+		err = resp.Body.Close()
 		if err != nil {
 			apmLogger.Errorf("Close response body failed. error: %s", err)
 		}
-	}(resp.Body)
+	}()
 	return nil
 }
 

@@ -74,7 +74,10 @@ func (b *Binding) addBinding(taskBinding TaskBinding, workerBinding WorkerBindin
 
 	existsWorkerId, err := b.getWorkerByTask(ctx, taskBinding.UniId)
 	if err != nil {
-		return fmt.Errorf("error obtaining field: %s from hash: %s. error: %s", taskBinding.UniId, common.DaemonBindingTask(), err)
+		return fmt.Errorf(
+			"error obtaining field: %s from hash: %s. error: %s",
+			taskBinding.UniId, common.DaemonBindingTask(), err,
+		)
 	}
 	if existsWorkerId != "" {
 		logger.Warnf("Task: %s(except to binding worker: %s) already exists in the current binding(workerId: %s), is same task been submitted repeatedly?", taskBinding.UniId, workerBinding.Id, existsWorkerId)
@@ -87,7 +90,10 @@ func (b *Binding) addBinding(taskBinding TaskBinding, workerBinding WorkerBindin
 	}
 
 	taskBindingBytes, _ := jsoniter.Marshal(taskBinding)
-	if err = b.redisClient.HSet(ctx, common.DaemonBindingWorker(workerBinding.WorkerId), taskBinding.UniId, taskBindingBytes).Err(); err != nil {
+	if err = b.redisClient.HSet(
+		ctx, common.DaemonBindingWorker(workerBinding.WorkerId),
+		taskBinding.UniId, taskBindingBytes,
+	).Err(); err != nil {
 		return fmt.Errorf("failed to add a worker binding, error: %s", err)
 	}
 	logger.Infof("[BINDING ADD] ADD BINDING: %s(taskUniId) <------> %s(workerId)", taskBinding.UniId, workerBinding.Id)
@@ -100,22 +106,34 @@ func (b *Binding) deleteBinding(taskUniId string) error {
 	workerInfoStr, err := b.getWorkerByTask(ctx, taskUniId)
 	var workerBinding WorkerBinding
 	if err = jsoniter.Unmarshal([]byte(workerInfoStr), &workerBinding); err != nil {
-		return fmt.Errorf("failed to parse value to WokerInfo on taskUniId Binding: %s, value: %s. error: %s", taskUniId, workerInfoStr, err)
+		return fmt.Errorf(
+			"failed to parse value to WokerInfo on taskUniId Binding: %s, value: %s. error: %s",
+			taskUniId, workerInfoStr, err,
+		)
 	}
 
 	if err != nil {
 		return fmt.Errorf("failed to check field: %s of hash: %s, error: %s", taskUniId, common.DaemonBindingTask(), err)
 	}
 	if workerBinding.WorkerId == "" {
-		return fmt.Errorf("failed to delete binding from task binding because the binding(%s <----> ?) does not exist", taskUniId)
+		return fmt.Errorf(
+			"failed to delete binding from task binding because the binding(%s <----> ?) does not exist",
+			taskUniId,
+		)
 	}
 
 	if err = b.redisClient.HDel(ctx, common.DaemonBindingTask(), taskUniId).Err(); err != nil {
-		return fmt.Errorf("failed to delete field: %s from task binding: %s. error: %s", taskUniId, common.DaemonBindingTask(), err)
+		return fmt.Errorf(
+			"failed to delete field: %s from task binding: %s. error: %s",
+			taskUniId, common.DaemonBindingTask(), err,
+		)
 	}
 
 	if err = b.redisClient.HDel(ctx, common.DaemonBindingWorker(workerBinding.WorkerId), taskUniId).Err(); err != nil {
-		return fmt.Errorf("failed to delete worker binding(%s <----> %s) on field: %s, error: %s", taskUniId, workerBinding.WorkerId, common.DaemonBindingWorker(workerBinding.WorkerId), err)
+		return fmt.Errorf(
+			"failed to delete worker binding(%s <----> %s) on field: %s, error: %s",
+			taskUniId, workerBinding.WorkerId, common.DaemonBindingWorker(workerBinding.WorkerId), err,
+		)
 	}
 
 	return err
@@ -131,7 +149,10 @@ func (b *Binding) deleteWorkerBinding(workerId string) error {
 	for taskUniId, taskBindingStr := range bindingTaskHash {
 		taskBinding, err := b.toTaskBinding(taskBindingStr)
 		if err != nil {
-			logger.Errorf("failed to parse taskBindingStr to TaskBinding, taskUniId: %s value: %s. error: %s", taskUniId, taskBindingStr, err)
+			logger.Errorf(
+				"failed to parse taskBindingStr to TaskBinding, taskUniId: %s value: %s. error: %s",
+				taskUniId, taskBindingStr, err,
+			)
 			continue
 		}
 		bindingTasks = append(bindingTasks, taskBinding)

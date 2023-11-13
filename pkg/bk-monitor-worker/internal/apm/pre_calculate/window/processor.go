@@ -76,7 +76,11 @@ type Processor struct {
 func (p *Processor) PreProcess(receiver chan<- storage.SaveRequest, event Event) {
 	exist, err := p.proxy.Exist(storage.ExistRequest{Target: storage.BloomFilter, Key: event.TraceId})
 	if err != nil {
-		p.logger.Warnf("Attempt to retrieve traceMeta from Bloom-filter failed, this traceId: %s will be process as a new window. error: %s", event.TraceId, err)
+		p.logger.Warnf(
+			"Attempt to retrieve traceMeta from Bloom-filter failed, "+
+				"this traceId: %s will be process as a new window. error: %s",
+			event.TraceId, err,
+		)
 		p.Process(receiver, event)
 	} else {
 		if exist {
@@ -104,7 +108,11 @@ func (p *Processor) listSpanFromStorage(event Event) []*StandardSpan {
 		if err == nil && data != nil {
 			parseErr := jsoniter.Unmarshal(data.([]byte), &spans)
 			if parseErr != nil {
-				p.logger.Infof("Cache spans whose traceId is %s was found in traceInfo(key: %s), but failed to be parsed to span list. error: %s", event.TraceId, infoKey, parseErr)
+				p.logger.Infof(
+					"Cache spans whose traceId is %s was found in traceInfo(key: %s), "+
+						"but failed to be parsed to span list. error: %s",
+					event.TraceId, infoKey, parseErr,
+				)
 			} else {
 				return spans
 			}
@@ -132,7 +140,11 @@ func (p *Processor) listSpanFromStorage(event Event) []*StandardSpan {
 		},
 	})
 	if err != nil {
-		log.Errorf("Data whose traceId: %s fails to be obtained from ES. That data will be ignored, and result may be distorted. error: %s", event.TraceId, err)
+		log.Errorf(
+			"Data whose traceId: %s fails to be obtained from ES. "+
+				"That data will be ignored, and result may be distorted. error: %s",
+			event.TraceId, err,
+		)
 		return spans
 	}
 	if spanBytes == nil {
@@ -142,7 +154,10 @@ func (p *Processor) listSpanFromStorage(event Event) []*StandardSpan {
 	}
 	originSpans, err := p.recoverSpans(spanBytes.([]byte))
 	if err != nil {
-		p.logger.Errorf("The data structure in ES is inconsistent, this data will be ignored. traceId: %s. error: %s ", event.TraceId, err)
+		p.logger.Errorf(
+			"The data structure in ES is inconsistent, this data will be ignored. traceId: %s. error: %s ",
+			event.TraceId, err,
+		)
 		return spans
 	}
 

@@ -22,7 +22,7 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
 )
 
-type KafkaConfig struct {
+type kafkaConfig struct {
 	KafkaTopic    string
 	KafkaGroupId  string
 	KafkaHost     string
@@ -30,30 +30,35 @@ type KafkaConfig struct {
 	KafkaPassword string
 }
 
+// KafkaHost host of kafka
 func KafkaHost(h string) Option {
 	return func(args *Options) {
 		args.KafkaHost = h
 	}
 }
 
+// KafkaUsername username of kafka
 func KafkaUsername(u string) Option {
 	return func(args *Options) {
 		args.KafkaUsername = u
 	}
 }
 
+// KafkaPassword password of kafka
 func KafkaPassword(p string) Option {
 	return func(args *Options) {
 		args.KafkaPassword = p
 	}
 }
 
+// KafkaTopic listen topic of kafka
 func KafkaTopic(t string) Option {
 	return func(options *Options) {
 		options.KafkaTopic = t
 	}
 }
 
+// KafkaGroupId consumerGroupId of kafka
 func KafkaGroupId(g string) Option {
 	return func(options *Options) {
 		options.KafkaGroupId = g
@@ -63,18 +68,23 @@ func KafkaGroupId(g string) Option {
 type kafkaNotifier struct {
 	ctx context.Context
 
-	config        KafkaConfig
+	config        kafkaConfig
 	consumerGroup sarama.ConsumerGroup
 	handler       consumeHandler
 }
 
+// Spans return a chan that can receive messages
 func (k *kafkaNotifier) Spans() <-chan []window.StandardSpan {
 	return k.handler.spans
 }
 
+// Start kafka start listen message for queue
 func (k *kafkaNotifier) Start(errorReceiveChan chan<- error) {
 	defer runtimex.HandleCrashToChan(errorReceiveChan)
-	logger.Infof("KafkaNotifier started. host: %s topic: %s groupId: %s", k.config.KafkaHost, k.config.KafkaTopic, k.config.KafkaGroupId)
+	logger.Infof(
+		"KafkaNotifier started. host: %s topic: %s groupId: %s",
+		k.config.KafkaHost, k.config.KafkaTopic, k.config.KafkaGroupId,
+	)
 loop:
 	for {
 		select {
@@ -94,14 +104,20 @@ type consumeHandler struct {
 	spans chan []window.StandardSpan
 }
 
+// Setup is run at the beginning of a new session, before ConsumeClaim.
 func (c consumeHandler) Setup(session sarama.ConsumerGroupSession) error {
 	return nil
 }
 
+// Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
+// but before the offsets are committed for the very last time.
 func (c consumeHandler) Cleanup(_ sarama.ConsumerGroupSession) error {
 	return nil
 }
 
+// ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
+// Once the Messages() channel is closed, the Handler must finish its processing
+// loop and exit.
 func (c consumeHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 
 	for {
@@ -134,17 +150,27 @@ func newKafkaNotifier(setters ...Option) Notifier {
 	for _, setter := range setters {
 		setter(args)
 	}
-	kafkaConfig := args.KafkaConfig
-	logger.Infof("listen %s topic as groupId: %s, establish a kafka[%s(%s:%s)] connection", kafkaConfig.KafkaTopic, kafkaConfig.KafkaGroupId, kafkaConfig.KafkaHost, kafkaConfig.KafkaUsername, kafkaConfig.KafkaPassword)
+	kafkaConfig := args.kafkaConfig
+	logger.Infof(
+		"listen %s topic as groupId: %s, establish a kafka[%s(%s:%s)] connection",
+		kafkaConfig.KafkaTopic,
+		kafkaConfig.KafkaGroupId,
+		kafkaConfig.KafkaHost,
+		kafkaConfig.KafkaUsername,
+		kafkaConfig.KafkaPassword,
+	)
 
 	authConfig := getConnectionSASLConfig(kafkaConfig.KafkaUsername, kafkaConfig.KafkaPassword)
 	group, err := sarama.NewConsumerGroup([]string{kafkaConfig.KafkaHost}, kafkaConfig.KafkaGroupId, authConfig)
 	if err != nil {
-		logger.Errorf("Failed to create a consumer group, topic: %s may not be consumed correctly. error: %s", kafkaConfig.KafkaTopic, err)
+		logger.Errorf(
+			"Failed to create a consumer group, topic: %s may not be consumed correctly. error: %s",
+			kafkaConfig.KafkaTopic, err,
+		)
 	}
 	return &kafkaNotifier{
 		ctx:           args.ctx,
-		config:        args.KafkaConfig,
+		config:        args.kafkaConfig,
 		consumerGroup: group,
 		handler:       consumeHandler{spans: make(chan []window.StandardSpan, args.chanBufferSize)},
 	}
@@ -162,7 +188,9 @@ func getConnectionSASLConfig(username, password string) *sarama.Config {
 		config.Net.SASL.Mechanism = sarama.SASLTypeSCRAMSHA512
 		config.Net.SASL.User = username
 		config.Net.SASL.Password = password
-		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &SCRAMSHA512Client{HashGeneratorFcn: SHA512} }
+		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient {
+			return &SCRAMSHA512Client{HashGeneratorFcn: SHA512}
+		}
 	}
 
 	return config
@@ -178,6 +206,7 @@ type SCRAMSHA512Client struct {
 	scram.HashGeneratorFcn
 }
 
+// Begin SHA512
 func (x *SCRAMSHA512Client) Begin(userName, password, authzID string) (err error) {
 	x.Client, err = x.HashGeneratorFcn.NewClient(userName, password, authzID)
 	if err != nil {
@@ -187,6 +216,7 @@ func (x *SCRAMSHA512Client) Begin(userName, password, authzID string) (err error
 	return nil
 }
 
+// Step SHA512
 func (x *SCRAMSHA512Client) Step(challenge string) (response string, err error) {
 	response, err = x.ClientConversation.Step(challenge)
 	return

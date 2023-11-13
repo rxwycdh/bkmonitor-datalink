@@ -155,7 +155,10 @@ func (p *Precalculate) Start(ctx context.Context, errorReceiveChan chan<- error,
 
 	var startInfo StartInfo
 	if err := jsoniter.Unmarshal(payload, &startInfo); err != nil {
-		logger.Errorf("Failed to start APM-Precalculate as parse value to StartInfo error, value: %s. error: %s", payload, err)
+		logger.Errorf(
+			"Failed to start APM-Precalculate as parse value to StartInfo error, value: %s. error: %s",
+			payload, err,
+		)
 		return
 	}
 
@@ -172,10 +175,16 @@ loop:
 			if err := core.GetMetadataCenter().AddDataId(dataId); err != nil {
 				retryCount++
 				if retryCount > 10 {
-					errorReceiveChan <- fmt.Errorf("failed to start the pre-calculation with dataId: %s after 10 retries, giving up. error: %s", dataId, err)
+					errorReceiveChan <- fmt.Errorf(
+						"failed to start the pre-calculation "+
+							"with dataId: %s after 10 retries, giving up. error: %s", dataId, err,
+					)
 					break loop
 				}
-				apmLogger.Errorf("Failed to start the pre-calculation with dataId: %s, it will not be executed. error: %s", dataId, err)
+				apmLogger.Errorf(
+					"Failed to start the pre-calculation with dataId: %s, it will not be executed. error: %s",
+					dataId, err,
+				)
 				ticker = time.NewTicker(time.Duration(retryCount*5) * time.Second)
 			} else {
 				var signal readySignal

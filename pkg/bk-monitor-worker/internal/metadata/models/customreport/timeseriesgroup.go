@@ -30,7 +30,7 @@ import (
 
 //go:generate goqueryset -in timeseriesgroup.go -out qs_tsgroup.go
 
-// TimeSeriesGroup: time series group model
+// TimeSeriesGroup : time series group model
 // gen:qs
 type TimeSeriesGroup struct {
 	CustomGroupBase
@@ -38,7 +38,7 @@ type TimeSeriesGroup struct {
 	TimeSeriesGroupName string `json:"time_series_group_name" gorm:"size:255"`
 }
 
-// TableName: 用于设置表的别名
+// TableName : 用于设置表的别名
 func (TimeSeriesGroup) TableName() string {
 	return "metadata_timeseriesgroup"
 }
@@ -115,9 +115,10 @@ func (ts *TimeSeriesGroup) GetRedisData() ([]map[string]interface{}, error) {
 	nowTime := time.Now()
 	nowTimeStampStr := fmt.Sprintf("%d", nowTime.Unix())
 	// NOTE: 使用ADD，参数为负值
-	validBeginTimeStamp := nowTime.Add(-time.Duration(config.MetadataMetricDimensionTimeSeriesMetricExpiredDays) * time.Hour * 24).Unix()
+	validBeginTimeStamp := nowTime.Add(
+		-time.Duration(config.MetadataMetricDimensionTimeSeriesMetricExpiredDays) * time.Hour * 24,
+	).Unix()
 	validBeginTimeStampStr := fmt.Sprintf("%d", validBeginTimeStamp)
-
 	ctx := context.Background()
 	redisClient, err := redisStore.GetInstance(ctx)
 	// 根据过滤参数，获取总量
@@ -143,7 +144,6 @@ func (ts *TimeSeriesGroup) GetRedisData() ([]map[string]interface{}, error) {
 				metricKey, validBeginTimeStampStr, nowTimeStampStr)
 			continue
 		}
-
 		// 1. 获取当前这批 metrics 的 dimensions 信息
 		var fields []string
 		for _, m := range metricsWithScores {
@@ -155,7 +155,6 @@ func (ts *TimeSeriesGroup) GetRedisData() ([]map[string]interface{}, error) {
 			logger.Errorf("failed to get dimensions from metrics, err: %v", err)
 			continue
 		}
-
 		// 2. 尝试更新 metrics 和对应 dimensions(tags)
 		for j, m := range metricsWithScores {
 			// NOTE: metrics 和 dimensions 列表一一对应
@@ -163,7 +162,6 @@ func (ts *TimeSeriesGroup) GetRedisData() ([]map[string]interface{}, error) {
 			if dimension == nil {
 				continue
 			}
-
 			// 解析
 			var dimensionsMap map[string]interface{}
 			if err := json.Unmarshal([]byte(fmt.Sprint(dimension)), &dimensionsMap); err != nil {
@@ -175,7 +173,6 @@ func (ts *TimeSeriesGroup) GetRedisData() ([]map[string]interface{}, error) {
 				logger.Error("key: dimensions not exist")
 				continue
 			}
-
 			// field name 转换为string
 			memStr := fmt.Sprintf("%v", m.Member)
 			metricInfo = append(

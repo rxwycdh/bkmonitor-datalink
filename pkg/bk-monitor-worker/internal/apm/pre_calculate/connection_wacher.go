@@ -63,7 +63,10 @@ func (p *Precalculate) WatchConnections(filePath string) {
 			logger.Errorf("open connections file: %s failed, error: %s", filePath, err)
 		} else if len(newConnectionList.Connections) > len(lastConnectionList.Connections) {
 			newConnection := newConnectionList.Connections[len(newConnectionList.Connections)-1]
-			logger.Infof("connections: kafkaHost: %s kafkaTopic: %s has been added to the file.", newConnection.KafkaHost, newConnection.KafkaTopic)
+			logger.Infof(
+				"connections: kafkaHost: %s kafkaTopic: %s has been added to the file.",
+				newConnection.KafkaHost, newConnection.KafkaTopic,
+			)
 			go p.StartByConnection(newConnection)
 			lastConnectionList = newConnectionList
 		}

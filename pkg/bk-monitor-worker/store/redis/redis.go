@@ -139,7 +139,7 @@ func (r *Instance) HGetAll(key string) map[string]string {
 	return val
 }
 
-// Publish
+// Publish message
 func (r *Instance) Publish(channelName string, msg interface{}) error {
 	if err := r.Client.Publish(r.ctx, channelName, msg).Err(); err != nil {
 		return err

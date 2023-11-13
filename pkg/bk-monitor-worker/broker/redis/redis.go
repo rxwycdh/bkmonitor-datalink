@@ -9,6 +9,7 @@
 
 // from bmw redis command
 
+// Package redis
 package redis
 
 import (
@@ -293,7 +294,10 @@ func (r *RDB) Dequeue(qnames ...string) (msg *task.TaskMessage, leaseExpirationT
 		}
 		encoded, err := cast.ToStringE(res)
 		if err != nil {
-			return nil, time.Time{}, errors.E(op, errors.Internal, fmt.Sprintf("cast error: unexpected return value from Lua script: %v", res))
+			return nil, time.Time{}, errors.E(
+				op, errors.Internal,
+				fmt.Sprintf("cast error: unexpected return value from Lua script: %v", res),
+			)
 		}
 		if msg, err = task.DecodeMessage([]byte(encoded)); err != nil {
 			return nil, time.Time{}, errors.E(op, errors.Internal, fmt.Sprintf("cannot decode message: %v", err))
@@ -615,7 +619,8 @@ redis.call("ZADD", KEYS[3], ARGV[3], ARGV[1])
 return 1
 `)
 
-// ScheduleUnique adds the task to the backlog queue to be processed in the future if the uniqueness lock can be acquired.
+// ScheduleUnique adds the task to the backlog queue to be processed in the future,
+// if the uniqueness lock can be acquired.
 // It returns ErrDuplicateTask if the lock cannot be acquired.
 func (r *RDB) ScheduleUnique(ctx context.Context, msg *task.TaskMessage, processAt time.Time, ttl time.Duration) error {
 	var op errors.Op = "rdb.ScheduleUnique"
@@ -984,7 +989,8 @@ func (r *RDB) ExtendLease(qname string, ids ...string) (expirationTime time.Time
 		zs = append(zs, &redis.Z{Member: id, Score: float64(expireAt.Unix())})
 	}
 	// Use XX option to only update elements that already exist; Don't add new elements
-	// TODO: Consider adding GT option to ensure we only "extend" the lease. Ceveat is that GT is supported from redis v6.2.0 or above.
+	// TODO: Consider adding GT option to ensure we only "extend" the lease.
+	// TODO Ceveat is that GT is supported from redis v6.2.0 or above.
 	err = r.client.ZAddXX(context.Background(), common.LeaseKey(qname), zs...).Err()
 	if err != nil {
 		return time.Time{}, err

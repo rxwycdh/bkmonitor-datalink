@@ -88,7 +88,10 @@ func (eg EventGroup) GetESData(ctx context.Context) (map[string][]string, error)
 	resp, err := client.SearchWithBody(
 		ctx,
 		fmt.Sprintf("%s*", eg.TableID),
-		strings.NewReader(fmt.Sprintf(`{"aggs":{"find_event_name":{"terms":{"field":"event_name","size":%v}}},"size":0}`, models.ESQueryMaxSize)),
+		strings.NewReader(fmt.Sprintf(
+			`{"aggs":{"find_event_name":{"terms":{"field":"event_name","size":%v}}},"size":0}`,
+			models.ESQueryMaxSize),
+		),
 	)
 	if err != nil {
 		return nil, err
@@ -116,7 +119,10 @@ func (eg EventGroup) GetESData(ctx context.Context) (map[string][]string, error)
 
 		go func(eventName string, eventDimensionData *sync.Map, wg *sync.WaitGroup) {
 			defer wg.Done()
-			query := fmt.Sprintf(`{"query":{"bool":{"must":{"term":{"event_name":"%s"}}}},"size":1,"sort":{"time":"desc"}}`, eventName)
+			query := fmt.Sprintf(
+				`{"query":{"bool":{"must":{"term":{"event_name":"%s"}}}},"size":1,"sort":{"time":"desc"}}`,
+				eventName,
+			)
 
 			resp, err := client.SearchWithBody(ctx, fmt.Sprintf("%s*", eg.TableID), strings.NewReader(query))
 			if err != nil {

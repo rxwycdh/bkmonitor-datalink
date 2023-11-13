@@ -42,7 +42,7 @@ func GetClient() (*Client, error) {
 	return clientInstance, nil
 }
 
-// Close
+// Close close the broker
 func (c *Client) Close() error {
 	return c.broker.Close()
 }
@@ -53,7 +53,7 @@ func (c *Client) Enqueue(task *t.Task, opts ...t.Option) (*t.TaskInfo, error) {
 	return c.EnqueueWithContext(context.Background(), task, opts...)
 }
 
-// EnqueueWithContext
+// EnqueueWithContext this method is the processing logic for messages entering the queue.
 func (c *Client) EnqueueWithContext(ctx context.Context, task *t.Task, opts ...t.Option) (*t.TaskInfo, error) {
 	if task == nil {
 		return nil, fmt.Errorf("task cannot be nil")

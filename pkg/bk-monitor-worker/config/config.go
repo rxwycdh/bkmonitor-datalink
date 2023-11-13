@@ -242,6 +242,7 @@ var (
 	keys []string
 )
 
+// GetValue get value from config file
 func GetValue[T any](key string, def T, getter ...func(string) T) T {
 	if !slices.Contains(keys, strings.ToLower(key)) {
 		return def

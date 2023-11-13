@@ -54,7 +54,8 @@ func (d *DefaultWatcher) start() {
 func (d *DefaultWatcher) watchWorker() {
 	ticker := time.NewTicker(d.config.watchWorkerInterval)
 	watchWorkerKeyPrefix := fmt.Sprintf("%s*", common.WorkerKeyPrefix())
-	logger.Infof("\nDaemonTask [DefaultWatcher] worker watcher started\n - \t interval: %s \n - \t watchKey: %s", d.config.watchWorkerInterval, watchWorkerKeyPrefix)
+	logger.Infof("\nDaemonTask [DefaultWatcher] worker watcher started\n - \t "+
+		"interval: %s \n - \t watchKey: %s", d.config.watchWorkerInterval, watchWorkerKeyPrefix)
 	workerMarkMapping := make(map[string]watchWorkerMark)
 
 	for {
@@ -62,7 +63,8 @@ func (d *DefaultWatcher) watchWorker() {
 		case <-ticker.C:
 			keys, err := d.redisClient.Keys(d.ctx, watchWorkerKeyPrefix).Result()
 			if err != nil {
-				logger.Info("Watcher failed to list workers with prefix: %s, may not be perceived. error: %s", watchWorkerKeyPrefix, err)
+				logger.Info("Watcher failed to list workers with prefix: %s, "+
+					"may not be perceived. error: %s", watchWorkerKeyPrefix, err)
 				continue
 			}
 
@@ -111,13 +113,15 @@ func (d *DefaultWatcher) toWorkerInfo(workerKey string) (service.WorkerInfo, err
 
 func (d *DefaultWatcher) handleAddWorker(workerMark watchWorkerMark) {
 	// TODO Supplement the logic added by worker
-	logger.Infof("[WORKER ADD] New worker: %s detected, online time: %s", workerMark.workerInfo.Id, workerMark.workerInfo.StartTime)
+	logger.Infof("[WORKER ADD] New worker: %s detected, "+
+		"online time: %s", workerMark.workerInfo.Id, workerMark.workerInfo.StartTime)
 }
 
 func (d *DefaultWatcher) handleDeleteWorker(workerKey string, workerMark watchWorkerMark) {
 	now := time.Now()
 	survival := workerMark.workerInfo.StartTime.Sub(now)
-	logger.Infof("[WORKER DELETE] Remove worker: %s detected, offline time: %s, survival: %d", workerMark.workerInfo.Id, now, survival)
+	logger.Infof("[WORKER DELETE] Remove worker: %s detected, "+
+		"offline time: %s, survival: %d", workerMark.workerInfo.Id, now, survival)
 
 	if err := GetBinding().deleteWorkerBinding(workerMark.workerInfo.Id); err != nil {
 		logger.Infof("Failed to delete worker(workerId: %s) binding, error: %s", workerMark.workerInfo.Id, err)
@@ -128,14 +132,16 @@ func (d *DefaultWatcher) watchTask() {
 	ticker := time.NewTicker(d.config.watchTaskInterval)
 	watchKey := common.DaemonTaskKey()
 	taskMarkMapping := make(map[string]watchTaskMark)
-	logger.Infof("\nDaemonTask [DefaultWatcher] task watcher started\n - \t interval: %s \n - \t watchKey: %s", d.config.watchTaskInterval, watchKey)
+	logger.Infof("\nDaemonTask [DefaultWatcher] task watcher started\n - \t "+
+		"interval: %s \n - \t watchKey: %s", d.config.watchTaskInterval, watchKey)
 
 	for {
 		select {
 		case <-ticker.C:
 			tasks, err := d.redisClient.SMembers(d.ctx, watchKey).Result()
 			if err != nil {
-				logger.Errorf("Failed to obtained task from queue which key: %s, The tasks in the queue may not be processed correctly", watchKey)
+				logger.Errorf("Failed to obtained task from queue which key: %s, "+
+					"The tasks in the queue may not be processed correctly", watchKey)
 				continue
 			}
 

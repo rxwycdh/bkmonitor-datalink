@@ -7,6 +7,7 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+// Package common
 package common
 
 import (
@@ -70,6 +71,7 @@ func LeaseKey(qname string) string {
 	return fmt.Sprintf("%slease", QueueKeyPrefix(qname))
 }
 
+// CompletedKey returns a redis key for the completed
 func CompletedKey(qname string) string {
 	return fmt.Sprintf("%scompleted", QueueKeyPrefix(qname))
 }
@@ -115,10 +117,12 @@ func WorkerKey(queue, workerIdentification string) string {
 	return fmt.Sprintf("%s:%s", WorkerKeyQueuePrefix(queue), workerIdentification)
 }
 
+// WorkerKeyPrefix prefix of worker status
 func WorkerKeyPrefix() string {
 	return "bmw:workers:"
 }
 
+// WorkerKeyQueuePrefix
 func WorkerKeyQueuePrefix(queue string) string {
 	return fmt.Sprintf("%s%s", WorkerKeyPrefix(), queue)
 }
@@ -447,6 +451,7 @@ type Lease struct {
 	expireAt time.Time // guarded by mu
 }
 
+// NewLease create a new lease
 func NewLease(expirationTime time.Time) *Lease {
 	return &Lease{
 		ch:       make(chan struct{}),
@@ -467,7 +472,7 @@ func (l *Lease) Reset(expirationTime time.Time) bool {
 	return true
 }
 
-// Sends a notification to lessee about expired lease
+// NotifyExpiration Sends a notification to lessee about expired lease
 // Returns true if notification was sent, returns false if the lease is still valid and notification was not sent.
 func (l *Lease) NotifyExpiration() bool {
 	if l.IsValid() {
@@ -481,7 +486,8 @@ func (l *Lease) closeCh() {
 	close(l.ch)
 }
 
-// Done returns a communication channel from which the lessee can read to get notified when lessor notifies about lease expiration.
+// Done returns a communication channel from which the lessee can read to get notified
+// when lessor notifies about lease expiration.
 func (l *Lease) Done() <-chan struct{} {
 	return l.ch
 }

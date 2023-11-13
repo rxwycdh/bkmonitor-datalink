@@ -27,6 +27,7 @@ type MetadataCenter struct {
 	consul  consul.Instance
 }
 
+// ConsulInfo info of consul
 type ConsulInfo struct {
 	BkBizId     int             `json:"bk_biz_id"`
 	BkBizName   any             `json:"bk_biz_name"`
@@ -51,6 +52,7 @@ type consulEsInfo struct {
 	Password  string `json:"password"`
 }
 
+// DataIdInfo global dataId info in pre-calculate
 type DataIdInfo struct {
 	dataId string
 
@@ -61,6 +63,7 @@ type DataIdInfo struct {
 	TraceKafka TraceKafkaConfig
 }
 
+// BaseInfo info of bk_biz
 type BaseInfo struct {
 	BkBizId   string
 	BkBizName string
@@ -68,6 +71,7 @@ type BaseInfo struct {
 	AppName   string
 }
 
+// TraceEsConfig es config
 type TraceEsConfig struct {
 	IndexName string
 	Host      string
@@ -75,6 +79,7 @@ type TraceEsConfig struct {
 	Password  string
 }
 
+// TraceKafkaConfig kafka configuration for span
 type TraceKafkaConfig struct {
 	Topic    string
 	Host     string
@@ -87,6 +92,7 @@ var (
 	centerInstance *MetadataCenter
 )
 
+// CreateMetadataCenter globally unique config provider
 func CreateMetadataCenter() {
 	metadataOnce.Do(func() {
 		consulClient, err := consul.GetInstance(context.Background())
@@ -101,11 +107,14 @@ func CreateMetadataCenter() {
 	})
 }
 
+// AddDataIdAndInfo manually specify the configuration of dataid for testing
 func (c *MetadataCenter) AddDataIdAndInfo(dataId string, info DataIdInfo) {
 	info.dataId = dataId
 	c.mapping.Store(dataId, info)
 }
 
+// AddDataId get the configuration of this dataId from consul.
+// If this configuration does not exist in consul, ignored.
 func (c *MetadataCenter) AddDataId(dataId string) error {
 	info := DataIdInfo{dataId: dataId}
 	if err := c.fillInfo(dataId, &info); err != nil {
@@ -168,26 +177,31 @@ func (c *MetadataCenter) fillInfo(dataId string, info *DataIdInfo) error {
 	return nil
 }
 
+// GetKafkaConfig get kafka config of dataId
 func (c *MetadataCenter) GetKafkaConfig(dataId string) TraceKafkaConfig {
 	v, _ := c.mapping.Load(dataId)
 	return v.(DataIdInfo).TraceKafka
 }
 
+// GetTraceEsConfig get trace es config of dataId
 func (c *MetadataCenter) GetTraceEsConfig(dataId string) TraceEsConfig {
 	v, _ := c.mapping.Load(dataId)
 	return v.(DataIdInfo).TraceEs
 }
 
+// GetSaveEsConfig get save es config of dataId
 func (c *MetadataCenter) GetSaveEsConfig(dataId string) TraceEsConfig {
 	v, _ := c.mapping.Load(dataId)
 	return v.(DataIdInfo).SaveEs
 }
 
+// GetBaseInfo get biz info of dataId
 func (c *MetadataCenter) GetBaseInfo(dataId string) BaseInfo {
 	v, _ := c.mapping.Load(dataId)
 	return v.(DataIdInfo).BaseInfo
 }
 
+// GetMetadataCenter return a global metadata provider
 func GetMetadataCenter() *MetadataCenter {
 	return centerInstance
 }

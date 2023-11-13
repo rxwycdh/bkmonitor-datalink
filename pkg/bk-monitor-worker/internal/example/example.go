@@ -24,7 +24,6 @@ type UserInfo struct {
 	UserID int
 }
 
-// HandleExampleTask
 func HandleExampleTask(ctx context.Context, t *task.Task) error {
 	logger.Info("example func trigger")
 	var p UserInfo
