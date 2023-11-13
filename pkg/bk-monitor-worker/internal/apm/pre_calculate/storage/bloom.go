@@ -12,14 +12,15 @@ package storage
 import (
 	"context"
 	"crypto/md5"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
-	"github.com/minio/highwayhash"
 	"sync"
 	"time"
 
 	redisBloom "github.com/RedisBloom/redisbloom-go"
 	"github.com/gomodule/redigo/redis"
+	"github.com/minio/highwayhash"
 	boom "github.com/tylertreat/BoomFilters"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 )
 
 type BloomStorageData struct {
@@ -47,6 +48,7 @@ func BloomFpRate(s float64) BloomOption {
 		options.fpRate = s
 	}
 }
+
 func NormalMemoryBloomConfig(opts ...MemoryBloomOption) BloomOption {
 	return func(options *BloomOptions) {
 		opt := MemoryBloomOptions{}
@@ -56,6 +58,7 @@ func NormalMemoryBloomConfig(opts ...MemoryBloomOption) BloomOption {
 		options.normalMemoryBloomOptions = opt
 	}
 }
+
 func NormalOverlapMemoryBloomConfig(opts ...OverlapBloomOption) BloomOption {
 	return func(options *BloomOptions) {
 		opt := OverlapBloomOptions{}
@@ -65,6 +68,7 @@ func NormalOverlapMemoryBloomConfig(opts ...OverlapBloomOption) BloomOption {
 		options.normalOverlapBloomOptions = opt
 	}
 }
+
 func LayersBloomConfig(opts ...LayersBloomOption) BloomOption {
 	return func(options *BloomOptions) {
 		opt := LayersBloomOptions{}
@@ -74,6 +78,7 @@ func LayersBloomConfig(opts ...LayersBloomOption) BloomOption {
 		options.layersBloomOptions = opt
 	}
 }
+
 func LayersCapDecreaseBloomConfig(opts ...LayersCapDecreaseBloomOption) BloomOption {
 	return func(options *BloomOptions) {
 		opt := LayersCapDecreaseBloomOptions{}
@@ -173,9 +178,9 @@ type OverlapBloomOptions struct {
 
 type OverlapBloomOption func(*OverlapBloomOptions)
 
-func OverlapBloomResetDuration(d int) OverlapBloomOption {
+func OverlapBloomResetDuration(d time.Duration) OverlapBloomOption {
 	return func(options *OverlapBloomOptions) {
-		options.resetDuration = time.Duration(d) * time.Minute
+		options.resetDuration = d
 	}
 }
 

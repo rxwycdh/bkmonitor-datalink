@@ -42,17 +42,17 @@ func RuntimeConfigMaxSize(maxSize int) RuntimeConfigOption {
 }
 
 // RuntimeConfigExpireInterval unit: s. The single expiration time of a single trace, which is increased with each reentry.
-func RuntimeConfigExpireInterval(interval int) RuntimeConfigOption {
+func RuntimeConfigExpireInterval(interval time.Duration) RuntimeConfigOption {
 	return func(config *RuntimeConfig) {
-		config.expireInterval = time.Duration(interval) * time.Second
+		config.expireInterval = interval
 	}
 }
 
 // RuntimeConfigMaxDuration unit: s. The maximum time that a single trace can survive in a window,
 // beyond which the window will be forced to expire.
-func RuntimeConfigMaxDuration(interval int) RuntimeConfigOption {
+func RuntimeConfigMaxDuration(interval time.Duration) RuntimeConfigOption {
 	return func(config *RuntimeConfig) {
-		config.maxDuration = time.Duration(interval) * time.Second
+		config.maxDuration = interval
 	}
 }
 
@@ -68,9 +68,9 @@ func ExpireIntervalIncrement(i int) RuntimeConfigOption {
 // NoDataMaxDuration unit: s. The maximum duration without data.
 // If the last update of trace exceeds this range, it will be forced to expire.
 // This field should be smaller than maxDuration
-func NoDataMaxDuration(i int) RuntimeConfigOption {
+func NoDataMaxDuration(i time.Duration) RuntimeConfigOption {
 	return func(config *RuntimeConfig) {
-		config.noDataMaxDuration = time.Duration(i) * time.Second
+		config.noDataMaxDuration = i
 	}
 }
 

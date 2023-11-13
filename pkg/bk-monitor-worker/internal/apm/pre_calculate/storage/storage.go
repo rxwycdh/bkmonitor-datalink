@@ -80,9 +80,9 @@ func WorkerCount(c int) ProxyOption {
 // Storage does not process the SaveRequest immediately upon receipt,
 // it waits for the conditions(SaveHoldDuration + SaveHoldMaxCount).
 // Condition 1: If the wait time > SaveHoldDuration, it will be executed
-func SaveHoldDuration(c int) ProxyOption {
+func SaveHoldDuration(c time.Duration) ProxyOption {
 	return func(options *ProxyOptions) {
-		options.saveHoldDuration = time.Duration(c) * time.Millisecond
+		options.saveHoldDuration = c
 	}
 }
 

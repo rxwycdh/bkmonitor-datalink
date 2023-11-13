@@ -42,9 +42,9 @@ func DistributiveWindowSubSize(maxSize int) DistributiveWindowOption {
 
 // DistributiveWindowWatchExpiredInterval unit: ms. The duration of check expiration trace in window.
 // If value is too small, the concurrent performance may be affected
-func DistributiveWindowWatchExpiredInterval(interval int) DistributiveWindowOption {
+func DistributiveWindowWatchExpiredInterval(interval time.Duration) DistributiveWindowOption {
 	return func(options *DistributiveWindowOptions) {
-		options.watchExpiredInterval = time.Duration(interval) * time.Millisecond
+		options.watchExpiredInterval = interval
 	}
 }
 

@@ -92,13 +92,13 @@ taskConfig:
       chanBufferSize: 100000
     window:
       maxSize: 10000
-      expireInterval: 60
-      maxDuration: 300
+      expireInterval: 1m
+      maxDuration: 5m
       expireIntervalIncrement: 60
-      noDataMaxDuration: 120
+      noDataMaxDuration: 2m
       distributive:
         subSize: 10
-        watchExpireInterval: 100
+        watchExpireInterval: 100ms
         concurrentCount: 1000
         concurrentExpirationMaximum: 100000
     processor:
@@ -108,13 +108,13 @@ taskConfig:
         saveRequestBufferSize: 100000
         workerCount: 10
         saveHoldMaxCount: 1000
-        saveHoldMaxDuration: 500
+        saveHoldMaxDuration: 500ms
         bloom:
           fpRate: 0.01
           normal:
             autoClean: 1440
           normalOverlap:
-            resetDuration: 120
+            resetDuration: 2h
           layersBloom:
             layers: 5
           decreaseBloom:
