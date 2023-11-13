@@ -150,13 +150,12 @@ func (w *DistributiveWindow) Start(spanChan <-chan []StandardSpan, errorReceiveC
 	//}
 }
 
-func (w *DistributiveWindow) ReportMetric() map[OperatorMetricKey][]OperatorMetric {
+func (w *DistributiveWindow) ReportMetric() map[OperatorMetricKey]int {
 
-	r := make(map[OperatorMetricKey][]OperatorMetric, 2)
+	r := make(map[OperatorMetricKey]int, 2)
 
 	for _, subWindow := range w.subWindows {
 
-		subWindowDimension := map[string]string{"dataId": w.dataId, "subWindowId": strconv.Itoa(subWindow.id)}
 		traceCount := 0
 		spanCount := 0
 
@@ -169,18 +168,16 @@ func (w *DistributiveWindow) ReportMetric() map[OperatorMetricKey][]OperatorMetr
 
 		traceV, traceE := r[TraceCount]
 		if traceE {
-			traceV = append(traceV, OperatorMetric{Value: traceCount, Dimension: subWindowDimension})
-			r[TraceCount] = traceV
+			r[TraceCount] = traceV + traceCount
 		} else {
-			r[TraceCount] = []OperatorMetric{{Value: traceCount, Dimension: subWindowDimension}}
+			r[TraceCount] = traceCount
 		}
 
 		spanV, spanE := r[SpanCount]
 		if spanE {
-			spanV = append(spanV, OperatorMetric{Value: spanCount, Dimension: subWindowDimension})
-			r[SpanCount] = spanV
+			r[SpanCount] = spanV + spanCount
 		} else {
-			r[SpanCount] = []OperatorMetric{{Value: spanCount, Dimension: subWindowDimension}}
+			r[SpanCount] = spanCount
 		}
 	}
 

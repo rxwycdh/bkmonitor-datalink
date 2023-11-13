@@ -241,10 +241,15 @@ var (
 	keys []string
 )
 
-func GetValue[T any](key string, def T) T {
+func GetValue[T any](key string, def T, getter ...func(string) T) T {
 	if !slices.Contains(keys, strings.ToLower(key)) {
 		return def
 	}
+
+	if len(getter) != 0 {
+		return getter[0](key)
+	}
+
 	value := viper.Get(key)
 	if value == nil {
 		logger.Warnf("Null configuration item(%s) was found! Check whether it is correct", key)

@@ -136,7 +136,7 @@ func (p *Precalculate) Build() PreCalculateProcessor {
 }
 
 func NewPrecalculate() Builder {
-
+	// Use the same http.Transport of reporting to avoid excessive connections
 	httpMetricTransport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   10 * time.Second,
@@ -314,7 +314,7 @@ func (p *RunInstance) startStorageBackend() chan<- storage.SaveRequest {
 
 func (p *RunInstance) startMetricReport(transport *http.Transport) {
 	if len(p.config.metricReportConfig) == 0 {
-		apmLogger.Infof("[!] Metric is not configured, the indicator will not be reported")
+		apmLogger.Infof("[!] metric is not configured, the indicator will not be reported")
 		return
 	}
 
@@ -323,6 +323,6 @@ func (p *RunInstance) startMetricReport(transport *http.Transport) {
 		setter(&opt)
 	}
 
-	p.metricCollector = NewMetricCollector(opt, transport)
-	p.metricCollector.StartReport(p)
+	p.metricCollector = NewMetricCollector(opt, transport, p)
+	p.metricCollector.StartReport()
 }

@@ -141,15 +141,10 @@ var (
 	SpanCount  OperatorMetricKey = "spanCount"
 )
 
-type OperatorMetric struct {
-	Dimension map[string]string
-	Value     int
-}
-
 // Operator Window processing strategy
 type Operator interface {
 	Start(spanChan <-chan []StandardSpan, errorReceiveChan chan<- error, runtimeOpt ...RuntimeConfigOption)
-	ReportMetric() map[OperatorMetricKey][]OperatorMetric
+	ReportMetric() map[OperatorMetricKey]int
 }
 
 type Operation struct {

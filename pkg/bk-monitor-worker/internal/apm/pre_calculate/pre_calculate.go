@@ -79,22 +79,19 @@ func Initial(parentCtx context.Context) (PreCalculateProcessor, error) {
 			storage.SaveReqBufferSize(config.StorageSaveRequestBufferSize),
 		).
 		WithMetricReport(
-			EnabledMetric(config.MetricEnabled),
+			EnabledMetricReport(config.MetricEnabled),
+			MetricReportDataId(config.MetricReportDataId),
+			MetricReportAccessToken(config.MetricReportAccessToken),
+			MetricReportHost(config.MetricReportHost),
+			ReportMetrics(
+				SaveRequestChanCount,
+				MessageReceiveChanCount,
+				WindowMetric,
+			),
 			EnabledMetricReportInterval(config.MetricReportInterval),
-			EnabledProfile(config.ProfileEnabled),
+			EnabledProfileReport(config.ProfileEnabled),
 			ProfileAddress(config.ProfileHost),
 			ProfileAppIdx(config.ProfileAppIdx),
-			ReportHost(config.MetricReportHost),
-			SaveRequestCountMetric(config.SaveRequestCountMetricDataId, config.SaveRequestCountMetricAccessToken),
-			MessageChanCountMetric(config.MessageCountMetricDataId, config.MessageCountMetricAccessToken),
-			WindowTraceAndSpanCountMetric(
-				config.WindowSpanCountMetricDataId, config.WindowSpanCountMetricAccessToken,
-				config.WindowTraceCountMetricDataId, config.WindowTraceCountMetricAccessToken,
-			),
-			EsTraceCountMetric(
-				config.EsOriginTraceCountMetricDataId, config.EsOriginTraceCountMetricAccessToken,
-				config.EsPreCalTraceCountMetricDataId, config.EsPreCalTraceCountMetricAccessToken,
-			),
 		).
 		Build(), nil
 }

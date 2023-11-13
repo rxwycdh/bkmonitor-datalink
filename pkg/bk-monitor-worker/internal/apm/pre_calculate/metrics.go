@@ -12,6 +12,7 @@ package pre_calculate
 import (
 	"bytes"
 	"fmt"
+	"golang.org/x/exp/maps"
 	"io"
 	"net/http"
 	"time"
@@ -21,60 +22,91 @@ import (
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
-type metricConfig struct {
-	name        string
-	dataId      int
-	accessToken string
-}
+type metric string
 
-type metric struct {
-	m           []metricConfig
-	collectFunc func(*RunInstance, metric, func(metric, int, map[string]string, int))
+var (
+	SaveRequestChanCount    metric = "SaveRequestCountMetric"
+	MessageReceiveChanCount metric = "MessageChanCountMetric"
+	WindowMetric            metric = "WindowMetric"
+	EsTraceMetric           metric = "EsTraceMetric"
+)
+
+var metricHandlerMapping = map[metric]func(*RunInstance, MetricOptions) (map[string]float64, error){
+	SaveRequestChanCount:    saveRequestCountReporter,
+	MessageReceiveChanCount: messageCountReporter,
+	WindowMetric:            windowTraceAndSpanCountReporter,
+	EsTraceMetric:           esTraceCountReporter,
 }
 
 type MetricCollector struct {
-	MetricOptions
+	config        MetricOptions
 	httpTransport *http.Transport
+	trigger       func() error
+	runInstance   *RunInstance
 }
 
 type MetricOption func(options *MetricOptions)
 
 type MetricOptions struct {
-	enabled bool
-
-	host        string
-	validMetric []*metric
+	enabledMetric        bool
+	metricReportHost     string
+	metrics              []metric
+	metricReportInterval time.Duration
+	metricsDataId        int
+	metricsAccessToken   string
 
 	enabledProfile bool
-	interval       time.Duration
 	profileAddress string
 	profileAppIdx  string
 }
 
-func ReportHost(h string) MetricOption {
+func EnabledMetricReport(e bool) MetricOption {
 	return func(options *MetricOptions) {
-		options.host = h
+		if !e {
+			logger.Infof("metric report is disabled.")
+		}
+		options.enabledMetric = e
 	}
 }
 
-func EnabledMetric(e bool) MetricOption {
+func MetricReportHost(h string) MetricOption {
 	return func(options *MetricOptions) {
-		options.enabled = e
+		options.metricReportHost = h
 	}
 }
 
-func EnabledMetricReportInterval(i int) MetricOption {
+func ReportMetrics(m ...metric) MetricOption {
 	return func(options *MetricOptions) {
-		options.interval = time.Duration(i) * time.Millisecond
+		options.metrics = m
 	}
 }
 
-func EnabledProfile(e bool) MetricOption {
+func EnabledMetricReportInterval(i time.Duration) MetricOption {
 	return func(options *MetricOptions) {
+		options.metricReportInterval = i
+	}
+}
+
+func MetricReportDataId(d int) MetricOption {
+	return func(options *MetricOptions) {
+		options.metricsDataId = d
+	}
+}
+
+func MetricReportAccessToken(d string) MetricOption {
+	return func(options *MetricOptions) {
+		options.metricsAccessToken = d
+	}
+}
+
+func EnabledProfileReport(e bool) MetricOption {
+	return func(options *MetricOptions) {
+		if !e {
+			logger.Infof("profile report is disabled.")
+		}
 		options.enabledProfile = e
 	}
 }
@@ -89,6 +121,7 @@ func ProfileAppIdx(h string) MetricOption {
 	return func(options *MetricOptions) {
 		if h != "" {
 			options.profileAppIdx = h
+			return
 		}
 		defaultV := "apm_precalculate"
 		logger.Infof("profile appIdx is not specified, %s is used as the default", defaultV)
@@ -96,290 +129,216 @@ func ProfileAppIdx(h string) MetricOption {
 	}
 }
 
-func SaveRequestCountMetric(dataId int, at string) MetricOption {
-	return func(options *MetricOptions) {
-		if dataId != 0 && at != "" {
-			options.validMetric = append(
-				options.validMetric,
-				&metric{
-					m:           []metricConfig{{name: "SaveRequestCountMetric", dataId: dataId, accessToken: at}},
-					collectFunc: saveRequestCountReporter},
-			)
+func NewMetricCollector(o MetricOptions, transport *http.Transport, instance *RunInstance) MetricCollector {
+
+	trigger := func() error {
+		reportValues := make(map[string]float64)
+		for _, m := range o.metrics {
+			values, err := metricHandlerMapping[m](instance, o)
+			if err != nil {
+				logger.Errorf("failed to get value of metric: %s, error: %s", m, err)
+				continue
+			}
+			maps.Copy(reportValues, values)
 		}
+		return ReportToServer(
+			transport,
+			o.metricReportHost,
+			o.metricsDataId,
+			o.metricsAccessToken,
+			instance.dataId,
+			reportValues,
+		)
 	}
+
+	return MetricCollector{config: o, httpTransport: transport, trigger: trigger, runInstance: instance}
 }
 
-func MessageChanCountMetric(dataId int, at string) MetricOption {
-	return func(options *MetricOptions) {
-		if dataId != 0 && at != "" {
-			options.validMetric = append(
-				options.validMetric,
-				&metric{
-					m:           []metricConfig{{name: "messageChanCountMetric", dataId: dataId, accessToken: at}},
-					collectFunc: messageCountReporter},
-			)
-		}
-	}
-}
+func (r *MetricCollector) StartReport() {
 
-func WindowTraceAndSpanCountMetric(spanCountDataId int, spanCountAt string, traceCountDataId int, traceCountAt string) MetricOption {
-	return func(options *MetricOptions) {
-
-		if spanCountDataId != 0 && spanCountAt != "" && traceCountDataId != 0 && traceCountAt != "" {
-			options.validMetric = append(
-				options.validMetric,
-				&metric{
-					m: []metricConfig{
-						{name: "windowSpanCountMetric", dataId: spanCountDataId, accessToken: spanCountAt},
-						{name: "windowTraceCountMetric", dataId: traceCountDataId, accessToken: traceCountAt},
-					},
-					collectFunc: windowTraceAndSpanCountReporter,
-				},
-			)
-		}
-	}
-}
-
-func EsTraceCountMetric(originCountDataId int, originCountAt string, preCalDataId int, preCalAt string) MetricOption {
-	return func(options *MetricOptions) {
-
-		if originCountDataId != 0 && originCountAt != "" && preCalDataId != 0 && preCalAt != "" {
-			options.validMetric = append(
-				options.validMetric,
-				&metric{
-					m: []metricConfig{
-						{name: "originEsTraceCount", dataId: originCountDataId, accessToken: originCountAt},
-						{name: "preCalEsTraceCount", dataId: preCalDataId, accessToken: preCalAt},
-					},
-					collectFunc: esTraceCountReporter,
-				},
-			)
-		}
-
-	}
-}
-
-func NewMetricCollector(o MetricOptions, transport *http.Transport) MetricCollector {
-	return MetricCollector{MetricOptions: o, httpTransport: transport}
-}
-
-func (r *MetricCollector) StartReport(runIns *RunInstance) {
-	if r.enabled {
-		for _, f := range r.validMetric {
-			go f.collectFunc(runIns, *f, func(metric metric, v int, dimension map[string]string, mIndex int) {
-				r.ReportToServer(metric, v, dimension, mIndex)
-			})
-		}
-
-		if r.enabledProfile {
-			r.startProfiling(runIns.dataId, r.profileAppIdx)
-		} else {
-			apmLogger.Infof("Profiling disabled.")
-		}
-	}
-}
-
-func saveRequestCountReporter(r *RunInstance, m metric, postHandle func(metric, int, map[string]string, int)) {
-	dimension := map[string]string{
-		"dataId": r.dataId,
-	}
-loop:
-	for {
-		select {
-		case <-r.ctx.Done():
-			apmLogger.Info("Metric: saveRequestCount report stopped.")
-			break loop
-		default:
-			v := len(r.proxy.SaveRequest())
-			postHandle(m, v, dimension, 0)
-			time.Sleep(r.metricCollector.interval)
-		}
-	}
-}
-
-func messageCountReporter(r *RunInstance, f metric, postHandle func(metric, int, map[string]string, int)) {
-	dimension := map[string]string{
-		"dataId": r.dataId,
+	if r.config.enabledProfile {
+		r.startProfiling(r.runInstance.dataId, r.config.profileAppIdx)
 	}
 
-loop:
-	for {
-		select {
-		case <-r.ctx.Done():
-			apmLogger.Info("Metric: messageCount report stopped.")
-			break loop
-		default:
-			v := len(r.notifier.Spans())
-			postHandle(f, v, dimension, 0)
-			time.Sleep(r.metricCollector.interval)
-		}
-	}
-}
+	if r.config.enabledMetric && r.config.metricsDataId != 0 && r.config.metricsAccessToken != "" {
 
-func windowTraceAndSpanCountReporter(r *RunInstance, metric metric, postHandle func(metric, int, map[string]string, int)) {
-
-loop:
-	for {
-		select {
-		case <-r.ctx.Done():
-			apmLogger.Info("Metric: TraceAndSpanCount report stopped.")
-			break loop
-		default:
-			data := r.windowHandler.ReportMetric()
-			for k, items := range data {
-				var mIndex int
-				if k == window.TraceCount {
-					mIndex = 1
-				} else {
-					mIndex = 0
-				}
-				for _, m := range items {
-					postHandle(metric, m.Value, m.Dimension, mIndex)
+		go func() {
+			for {
+				select {
+				case <-r.runInstance.ctx.Done():
+					logger.Infof("metric report done")
+					return
+				default:
+					if err := r.trigger(); err != nil {
+						logger.Infof("failed to report metric, error: %s", err)
+					}
+					time.Sleep(r.config.metricReportInterval)
 				}
 			}
-			time.Sleep(r.metricCollector.interval)
-		}
+		}()
 	}
 }
 
-func esTraceCountReporter(r *RunInstance, metric metric, postHandle func(metric, int, map[string]string, int)) {
+func saveRequestCountReporter(r *RunInstance, _ MetricOptions) (map[string]float64, error) {
+	res := make(map[string]float64)
+	res["SaveRequestCount"] = float64(len(r.proxy.SaveRequest()))
+	return res, nil
+}
+
+func messageCountReporter(r *RunInstance, _ MetricOptions) (map[string]float64, error) {
+	res := make(map[string]float64)
+	res["ReceiveMessageCount"] = float64(len(r.notifier.Spans()))
+	return res, nil
+}
+
+func windowTraceAndSpanCountReporter(r *RunInstance, _ MetricOptions) (map[string]float64, error) {
+
+	res := make(map[string]float64)
+
+	data := r.windowHandler.ReportMetric()
+
+	for k, v := range data {
+		res[string(k)] = float64(v)
+	}
+	return res, nil
+}
+
+// esTraceCountReporter This is the test indicator. Do not use it in the production environment.
+// In order to check whether the trace count in pre-Calculate index is consistent with that in the original table.
+func esTraceCountReporter(r *RunInstance, o MetricOptions) (map[string]float64, error) {
 
 	now := time.Now()
-	next := now.Add(time.Minute)
-	next = time.Date(next.Year(), next.Month(), next.Day(), next.Hour(), next.Minute(), 0, 0, next.Location())
-	duration := next.Sub(now)
-	time.Sleep(duration)
-	ticker := time.NewTicker(1 * time.Minute)
-	apmLogger.Infof("Metric: OriginTraceCount/PreCalTraceCount start at %s", time.Now().Format(time.Kitchen))
-
-	dimension := map[string]string{
-		"dataId": r.dataId,
-	}
-
+	// get the value within the range according to the reporting interval
+	previous := now.Add(-o.metricReportInterval)
+	startTime := time.Date(
+		previous.Year(),
+		previous.Month(),
+		previous.Day(),
+		previous.Hour(),
+		previous.Minute(), 0, 0,
+		previous.Location(),
+	)
+	endTime := time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		now.Hour(),
+		now.Minute(), 0, 0,
+		now.Location(),
+	)
 	baseInfo := core.GetMetadataCenter().GetBaseInfo(r.dataId)
-
 	aggsName := "unique_trace_ids_count"
-loop:
-	for {
-		select {
-		case <-r.ctx.Done():
-			apmLogger.Info("Metric: OriginTraceCount/PreCalTraceCount report stopped.")
-			break loop
-		case <-ticker.C:
-			n := time.Now()
+	res := make(map[string]float64)
+	traceIdAggsQuery := func(isNano bool, filter []map[string]any) storage.EsQueryData {
+		var s, e int64
+		if isNano {
+			s = startTime.UnixNano()
+			e = endTime.UnixNano()
+		} else {
+			s = startTime.UnixMilli()
+			e = endTime.UnixMilli()
+		}
 
-			startTime := time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute()-1, 0, 0, n.Location())
-			endTime := startTime.Add(time.Minute)
-
-			traceIdAggsQuery := func(isNano bool, filter []map[string]any) storage.EsQueryData {
-				var s, e int64
-				if isNano {
-					s = startTime.UnixNano()
-					e = endTime.UnixNano()
-				} else {
-					s = startTime.UnixMilli()
-					e = endTime.UnixMilli()
-				}
-
-				f := append([]map[string]any{{"range": map[string]any{"time": map[string]int64{"gte": s, "lte": e}}}}, filter...)
-				return storage.EsQueryData{
-					Converter: storage.AggsCountConvert,
-					Body: map[string]any{
-						"size": 0,
-						"query": map[string]any{
-							"bool": map[string]any{
-								"filter": f,
-							},
-						},
-						"aggs": map[string]any{
-							aggsName: map[string]any{
-								"cardinality": map[string]string{
-									"field": "trace_id",
-								},
-							},
+		f := append([]map[string]any{{"range": map[string]any{"time": map[string]int64{"gte": s, "lte": e}}}}, filter...)
+		return storage.EsQueryData{
+			Converter: storage.AggsCountConvert,
+			Body: map[string]any{
+				"size": 0,
+				"query": map[string]any{
+					"bool": map[string]any{
+						"filter": f,
+					},
+				},
+				"aggs": map[string]any{
+					aggsName: map[string]any{
+						"cardinality": map[string]string{
+							"field": "trace_id",
 						},
 					},
-				}
-			}
-
-			traceEsCount, traceErr := r.proxy.Query(storage.QueryRequest{
-				Target: storage.TraceEs,
-				Data:   traceIdAggsQuery(false, []map[string]any{}),
+				},
 			},
-			)
-			if traceErr != nil {
-				apmLogger.Errorf("Query OriginTraceES count failed, error: %s", traceErr)
-			} else {
-				traceEsCountM := traceEsCount.(map[string]int)
-				if len(traceEsCountM) != 0 {
-					postHandle(metric, traceEsCountM[aggsName], dimension, 0)
-				}
-			}
-
-			saveEsCount, saveErr := r.proxy.Query(storage.QueryRequest{
-				Target: storage.SaveEs,
-				Data: traceIdAggsQuery(true,
-					[]map[string]any{
-						{
-							"term": map[string]string{
-								"biz_id": baseInfo.BkBizId,
-							},
-						},
-						{
-							"term": map[string]string{
-								"app_name": baseInfo.AppName,
-							},
-						},
-					}),
-			},
-			)
-			if saveErr != nil {
-				apmLogger.Errorf("Query PreCalTraceES count failed, error: %s", saveErr)
-			} else {
-				saveEsCountM := saveEsCount.(map[string]int)
-				if len(saveEsCountM) != 0 {
-					postHandle(metric, saveEsCountM[aggsName], dimension, 1)
-				}
-			}
-
-			time.Sleep(r.metricCollector.interval)
 		}
 	}
+
+	traceEsCount, traceErr := r.proxy.Query(storage.QueryRequest{
+		Target: storage.TraceEs,
+		Data:   traceIdAggsQuery(false, []map[string]any{}),
+	},
+	)
+	if traceErr != nil {
+		return res, fmt.Errorf("query OriginTraceES count failed, error: %s", traceErr)
+	} else {
+		traceEsCountM := traceEsCount.(map[string]int)
+		if len(traceEsCountM) != 0 {
+			res["traceEsCount"] = float64(traceEsCountM[aggsName])
+		}
+	}
+
+	saveEsCount, saveErr := r.proxy.Query(storage.QueryRequest{
+		Target: storage.SaveEs,
+		Data: traceIdAggsQuery(true,
+			[]map[string]any{
+				{
+					"term": map[string]string{
+						"biz_id": baseInfo.BkBizId,
+					},
+				},
+				{
+					"term": map[string]string{
+						"app_name": baseInfo.AppName,
+					},
+				},
+			}),
+	},
+	)
+	if saveErr != nil {
+		return res, fmt.Errorf("query PreCalTraceES count failed, error: %s", saveErr)
+	} else {
+		saveEsCountM := saveEsCount.(map[string]int)
+		if len(saveEsCountM) != 0 {
+			res["saveEsCount"] = float64(saveEsCountM[aggsName])
+		}
+	}
+
+	return res, nil
 }
 
-func (r *MetricCollector) ReportToServer(m metric, v int, dimension map[string]string, mIndex int) {
+func ReportToServer(
+	httpClient *http.Transport,
+	reportHost string,
+	reportDataId int, reportAccessToken string, dataId string,
+	values map[string]float64,
+) error {
+
 	data := map[string]any{
-		"data_id":      m.m[mIndex].dataId,
-		"access_token": m.m[mIndex].accessToken,
+		"data_id":      reportDataId,
+		"access_token": reportAccessToken,
 		"data": []map[string]any{
 			{
-				"metrics": map[string]any{
-					"value": v,
+				"metrics": values,
+				"target":  "metric-collector",
+				"dimension": map[string]string{
+					"dataId": dataId,
 				},
-				"target":    "metric-collector",
-				"dimension": dimension,
 			},
 		},
 	}
 	jsonData, err := jsoniter.Marshal(data)
 	if err != nil {
-		apmLogger.Errorf("Parsing json data failed. This metric: %s will not be reported. error: %s", m.m[mIndex].name, err)
-		return
+		return fmt.Errorf("parsing json data failed. error: %s", err)
 	}
 
-	req, err := http.NewRequest("POST", r.host, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", reportHost, bytes.NewBuffer(jsonData))
 	if err != nil {
-		apmLogger.Errorf("Create request failed. This metric: %s will not be reported. error: %s", m.m[mIndex].name, err)
-		return
+		return fmt.Errorf("create request failed, error: %s", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	// 发送请求并获取响应
-	client := &http.Client{Transport: r.httpTransport}
+	client := &http.Client{Transport: httpClient}
 	resp, err := client.Do(req)
 	if err != nil {
-		apmLogger.Errorf("Post request failed. This metric: %s will not be reported. error: %s", m.m[mIndex].name, err)
-		return
+		return fmt.Errorf("post request failed, error: %s", err)
 	}
 	defer func(Body io.ReadCloser) {
 		err = Body.Close()
@@ -387,6 +346,7 @@ func (r *MetricCollector) ReportToServer(m metric, v int, dimension map[string]s
 			apmLogger.Errorf("Close response body failed. error: %s", err)
 		}
 	}(resp.Body)
+	return nil
 }
 
 func (r *MetricCollector) startProfiling(dataId, appIdx string) {
@@ -394,7 +354,7 @@ func (r *MetricCollector) startProfiling(dataId, appIdx string) {
 	n := fmt.Sprintf("apm_precalculate-%s", appIdx)
 	_, err := pyroscope.Start(pyroscope.Config{
 		ApplicationName: n,
-		ServerAddress:   r.profileAddress,
+		ServerAddress:   r.config.profileAddress,
 		Logger:          apmLogger,
 		Tags:            map[string]string{"dataId": dataId},
 		ProfileTypes: []pyroscope.ProfileType{
@@ -418,5 +378,5 @@ func (r *MetricCollector) startProfiling(dataId, appIdx string) {
 		apmLogger.Errorf("Start pyroscope failed, err: %s", err)
 		return
 	}
-	apmLogger.Infof("Start profiling at %s(name: %s)", r.profileAddress, n)
+	apmLogger.Infof("Start profiling at %s(name: %s)", r.config.profileAddress, n)
 }

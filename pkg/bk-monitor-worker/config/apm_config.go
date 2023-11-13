@@ -9,6 +9,12 @@
 
 package config
 
+import (
+	"time"
+
+	"github.com/spf13/viper"
+)
+
 var (
 	NotifierChanBufferSize                int
 	WindowMaxSize                         int
@@ -34,24 +40,14 @@ var (
 	StorageBloomDecreaseLayers                    int
 	StorageBloomDecreaseDivisor                   int
 
-	MetricEnabled                       bool
-	MetricReportInterval                int
-	ProfileEnabled                      bool
-	ProfileHost                         string
-	ProfileAppIdx                       string
-	MetricReportHost                    string
-	SaveRequestCountMetricDataId        int
-	SaveRequestCountMetricAccessToken   string
-	MessageCountMetricDataId            int
-	MessageCountMetricAccessToken       string
-	WindowTraceCountMetricDataId        int
-	WindowTraceCountMetricAccessToken   string
-	WindowSpanCountMetricDataId         int
-	WindowSpanCountMetricAccessToken    string
-	EsOriginTraceCountMetricDataId      int
-	EsOriginTraceCountMetricAccessToken string
-	EsPreCalTraceCountMetricDataId      int
-	EsPreCalTraceCountMetricAccessToken string
+	MetricEnabled           bool
+	MetricReportInterval    time.Duration
+	ProfileEnabled          bool
+	ProfileHost             string
+	ProfileAppIdx           string
+	MetricReportHost        string
+	MetricReportDataId      int
+	MetricReportAccessToken string
 )
 
 func initApmVariables() {
@@ -86,27 +82,12 @@ func initApmVariables() {
 	/*
 	   Metric Config
 	*/
-	MetricEnabled = GetValue("taskConfig.apmPreCalculate.metrics.enabled", false)
-	MetricReportInterval = GetValue("taskConfig.apmPreCalculate.metrics.reportInterval", 1000)
+	MetricEnabled = GetValue("taskConfig.apmPreCalculate.metrics.timeSeries.enabled", false)
+	MetricReportHost = GetValue("taskConfig.apmPreCalculate.metrics.timeSeries.host", "")
+	MetricReportInterval = GetValue("taskConfig.apmPreCalculate.metrics.timeSeries.interval", time.Minute, viper.GetDuration)
+	MetricReportDataId = GetValue("taskConfig.apmPreCalculate.metrics.timeSeries.dataId", 0)
+	MetricReportAccessToken = GetValue("taskConfig.apmPreCalculate.metrics.timeSeries.accessToken", "")
 	ProfileEnabled = GetValue("taskConfig.apmPreCalculate.metrics.profile.enabled", false)
 	ProfileHost = GetValue("taskConfig.apmPreCalculate.metrics.profile.host", "")
 	ProfileAppIdx = GetValue("taskConfig.apmPreCalculate.metrics.profile.appIdx", "")
-	MetricReportHost = GetValue("taskConfig.apmPreCalculate.metrics.reportHost", "")
-	SaveRequestCountMetricDataId = GetValue("taskConfig.apmPreCalculate.metrics.saveRequestChanCount.dataId", 0)
-	SaveRequestCountMetricAccessToken = GetValue("taskConfig.apmPreCalculate.metrics.saveRequestChanCount.accessToken", "")
-
-	MessageCountMetricDataId = GetValue("taskConfig.apmPreCalculate.metrics.messageChanCount.dataId", 0)
-	MessageCountMetricAccessToken = GetValue("taskConfig.apmPreCalculate.metrics.messageChanCount.accessToken", "")
-
-	WindowTraceCountMetricDataId = GetValue("taskConfig.apmPreCalculate.metrics.windowTraceCount.dataId", 0)
-	WindowTraceCountMetricAccessToken = GetValue("taskConfig.apmPreCalculate.metrics.windowTraceCount.accessToken", "")
-
-	WindowSpanCountMetricDataId = GetValue("taskConfig.apmPreCalculate.metrics.windowSpanCount.dataId", 0)
-	WindowSpanCountMetricAccessToken = GetValue("taskConfig.apmPreCalculate.metrics.windowSpanCount.accessToken", "")
-
-	EsOriginTraceCountMetricDataId = GetValue("taskConfig.apmPreCalculate.metrics.esOriginTraceCount.dataId", 0)
-	EsOriginTraceCountMetricAccessToken = GetValue("taskConfig.apmPreCalculate.metrics.esOriginTraceCount.accessToken", "")
-	EsPreCalTraceCountMetricDataId = GetValue("taskConfig.apmPreCalculate.metrics.esPreCalTraceCount.dataId", 0)
-	EsPreCalTraceCountMetricAccessToken = GetValue("taskConfig.apmPreCalculate.metrics.esPreCalTraceCount.accessToken", "")
-
 }
