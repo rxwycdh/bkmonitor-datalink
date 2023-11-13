@@ -7,19 +7,14 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package common
+package elasticsearch
 
 import (
-	"fmt"
-	"github.com/google/uuid"
-	"os"
-	"strings"
+	"github.com/pkg/errors"
 )
 
-func GenerateProcessorId() string {
-	host, err := os.Hostname()
-	if err != nil {
-		host = "unknown-host"
-	}
-	return fmt.Sprintf("%s-%d-%v", host, os.Getpid(), strings.ReplaceAll(uuid.New().String(), "-", ""))
-}
+var (
+	NotFoundErr        = errors.New("404 not found")
+	ClientVersionErr   = errors.Errorf("es client version error")
+	ResponseVersionErr = errors.Errorf("es response assert failed")
+)

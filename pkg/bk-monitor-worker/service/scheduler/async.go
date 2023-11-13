@@ -7,27 +7,30 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package scheduler
+package jsonx
 
 import (
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/example"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/processor"
+	"github.com/bytedance/sonic"
 )
 
-type Task struct {
-	Handler processor.HandlerFunc
+var sonicAPI = sonic.Config{
+	EscapeHTML:       true, // 安全性
+	CompactMarshaler: true, // 兼容性
+	CopyString:       true, // 正确性
+}.Froze()
+
+func Marshal(v interface{}) ([]byte, error) {
+	return sonicAPI.Marshal(v)
 }
 
-var (
-	exampleTask = "async:test_example"
+func Unmarshal(data []byte, v interface{}) error {
+	return sonicAPI.Unmarshal(data, v)
+}
 
-	asyncTaskDefine = map[string]Task{
-		exampleTask: {
-			Handler: example.HandleExampleTask,
-		},
-	}
-)
+func MarshalString(v interface{}) (string, error) {
+	return sonicAPI.MarshalToString(v)
+}
 
-func GetAsyncTaskMapping() map[string]Task {
-	return asyncTaskDefine
+func UnmarshalString(data string, v interface{}) error {
+	return sonicAPI.UnmarshalFromString(data, v)
 }
