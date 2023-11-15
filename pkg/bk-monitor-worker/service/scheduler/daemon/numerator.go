@@ -12,8 +12,13 @@ package daemon
 import (
 	"context"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"time"
+
+	"github.com/ahmetb/go-linq/v3"
+	"github.com/go-redis/redis/v8"
+	jsoniter "github.com/json-iterator/go"
+	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
 	rdb "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/broker/redis"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/common"
@@ -21,10 +26,6 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/task"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"github.com/ahmetb/go-linq/v3"
-	"github.com/go-redis/redis/v8"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 type DefaultNumeratorOptions struct {

@@ -12,10 +12,10 @@ package pre_calculate
 import (
 	"context"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"sync"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/exp/slices"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"

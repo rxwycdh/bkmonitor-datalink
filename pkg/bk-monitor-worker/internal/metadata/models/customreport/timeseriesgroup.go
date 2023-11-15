@@ -16,6 +16,9 @@ import (
 	"math"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
+	goRedis "github.com/go-redis/redis/v8"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/metadata/models"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/metadata/models/resulttable"
@@ -23,8 +26,6 @@ import (
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/mapx"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/slicex"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	mapset "github.com/deckarep/golang-set"
-	goRedis "github.com/go-redis/redis/v8"
 )
 
 //go:generate goqueryset -in timeseriesgroup.go -out qs_tsgroup.go

@@ -12,10 +12,10 @@ package notifier
 import (
 	"context"
 	"crypto/sha512"
-	"github.com/valyala/fastjson"
 	"time"
 
 	"github.com/IBM/sarama"
+	"github.com/valyala/fastjson"
 	"github.com/xdg-go/scram"
 
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"

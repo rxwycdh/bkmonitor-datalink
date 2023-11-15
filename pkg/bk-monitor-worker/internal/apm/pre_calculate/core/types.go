@@ -9,7 +9,9 @@
 
 package core
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	// SpanMaxSize Maximum of analyses

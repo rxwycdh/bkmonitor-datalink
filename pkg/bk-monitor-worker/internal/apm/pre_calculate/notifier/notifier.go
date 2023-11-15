@@ -11,10 +11,12 @@ package notifier
 
 import (
 	"context"
+	"sync"
+
+	"go.uber.org/zap"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
 	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"go.uber.org/zap"
-	"sync"
 )
 
 type Notifier interface {

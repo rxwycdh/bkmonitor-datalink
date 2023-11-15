@@ -10,10 +10,10 @@
 package task
 
 import (
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"log"
 	"sync"
 
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	worker "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/worker"
 )
 

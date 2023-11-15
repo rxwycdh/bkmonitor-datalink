@@ -11,11 +11,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"github.com/spf13/viper"
-	"golang.org/x/exp/slices"
 	"reflect"
 	"strings"
+
+	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
 var (

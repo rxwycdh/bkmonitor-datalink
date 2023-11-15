@@ -10,10 +10,11 @@
 package storage
 
 import (
+	"time"
+
 	redisBloom "github.com/RedisBloom/redisbloom-go"
 	"github.com/gomodule/redigo/redis"
 	boom "github.com/tylertreat/BoomFilters"
-	"time"
 )
 
 type BloomStorageData struct {

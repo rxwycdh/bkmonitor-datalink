@@ -14,8 +14,9 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/proto"
 	"google.golang.org/protobuf/proto"
+
+	pb "github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/proto"
 )
 
 // EncodeMessage marshals the given task message and returns an encoded bytes.

@@ -11,16 +11,18 @@ package cmd
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
+	"github.com/spf13/cobra"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/log"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/daemon"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/service/scheduler/periodic"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"github.com/spf13/cobra"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func init() {

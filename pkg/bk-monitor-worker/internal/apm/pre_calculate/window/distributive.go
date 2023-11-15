@@ -11,14 +11,16 @@ package window
 
 import (
 	"context"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
-	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
-	"github.com/cespare/xxhash/v2"
-	"go.uber.org/zap"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/cespare/xxhash/v2"
+	"go.uber.org/zap"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/runtimex"
+	monitorLogger "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
 // DistributiveWindowOptions all configs

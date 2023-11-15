@@ -11,13 +11,14 @@ package consul
 
 import (
 	"context"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"time"
 
+	"github.com/hashicorp/consul/api"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/store"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 	consulUtils "github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/register/consul"
-	"github.com/hashicorp/consul/api"
 )
 
 type Instance struct {

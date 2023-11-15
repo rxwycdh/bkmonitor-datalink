@@ -11,14 +11,16 @@ package pre_calculate
 
 import (
 	"bytes"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
-	"github.com/grafana/pyroscope-go"
-	jsoniter "github.com/json-iterator/go"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/grafana/pyroscope-go"
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/core"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/storage"
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/internal/apm/pre_calculate/window"
 )
 
 type metricConfig struct {

@@ -11,11 +11,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	_ "go.uber.org/automaxprocs"
-	"os"
+
+	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/config"
 )
 
 var rootCmd = &cobra.Command{
