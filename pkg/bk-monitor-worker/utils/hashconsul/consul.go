@@ -10,21 +10,35 @@
 package hashconsul
 
 import (
+	"fmt"
+	"unicode/utf8"
+
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/store/consul"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/bk-monitor-worker/utils/jsonx"
 	"github.com/TencentBlueKing/bkmonitor-datalink/pkg/utils/logger"
 )
 
 func Put(c *consul.Instance, key, val string) error {
+	// 将中文转化为unicode
+	var unicodeVal string
+	for _, runeValue := range val {
+		if utf8.ValidRune(runeValue) && runeValue >= 128 {
+			unicodeVal += fmt.Sprintf("\\u%04X", runeValue)
+		} else {
+			unicodeVal += string(runeValue)
+		}
+	}
+	val = unicodeVal
+
 	oldValueBytes, err := c.Get(key)
 	if err != nil {
-		logger.Info("can not get old value from [%s] because of [%v], will refresh consul", key, err)
+		logger.Infof("can not get old value from [%s] because of [%v], will refresh consul", key, err)
 		return c.Put(key, val, 0)
 	}
 	oldValue := string(oldValueBytes)
 	equal, err := jsonx.CompareJson(oldValue, val)
 	if err != nil {
-		logger.Info("can not compare new value [%s] and old value [%s], will refresh consul", key, err)
+		logger.Infof("can not compare new value [%s] and old value [%s], will refresh consul", key, err)
 		return c.Put(key, val, 0)
 	}
 	if !equal {

@@ -29,6 +29,8 @@ broker:
       password: ""
 
 # ================================ 存储配置  ===================================
+# 旁路配置，用于数据对账
+bypassSuffixPath: ""
 store:
   redis:
     mode: standalone
@@ -121,8 +123,13 @@ taskConfig:
       stage: stag
       appCode: appCode
       appSecret: appSecret
-      bcsApiGatewayDomain: ""
+      bcsApiMicroGwUrl: ""
       bcsApiGatewayToken: ""
+      bcsApiGatewayBaseUrl: ""
+      nodemanApiBaseUrl: ""
+      bkdataApiBaseUrl: ""
+      bkssmUrl: ""
+      bcsCcApiUrl: ""
   # metadata: metadata任务配置
   metadata:
     metricDimension:

@@ -7,21 +7,21 @@
 // an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package cmdb
+package bcs
 
 import (
 	"github.com/TencentBlueKing/bk-apigateway-sdks/core/bkapi"
 	"github.com/TencentBlueKing/bk-apigateway-sdks/core/define"
 )
 
-// Client for cmdb
+// Client for bcs
 type Client struct {
 	define.BkApiClient
 }
 
-// New cmdb client
+// New bcs client
 func New(configProvider define.ClientConfigProvider, opts ...define.BkApiClientOption) (*Client, error) {
-	client, err := bkapi.NewBkApiClient("cmdb", configProvider, opts...)
+	client, err := bkapi.NewBkApiClient("bcs-api", configProvider, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -29,41 +29,17 @@ func New(configProvider define.ClientConfigProvider, opts ...define.BkApiClientO
 	return &Client{BkApiClient: client}, nil
 }
 
-// SearchCloudArea for cmdb resource search_cloud_area
-// 查询云区域信息
-func (c *Client) SearchCloudArea(opts ...define.OperationOption) define.Operation {
-	path := "search_cloud_area"
-	return c.BkApiClient.NewOperation(bkapi.OperationConfig{
-		Name:   "search_cloud_area",
-		Method: "POST",
-		Path:   path,
-	}, opts...)
-}
-
-// ListBizHostsTopo for cmdb resource list_biz_hosts_topo
-// 查询业务主机及关联拓扑
-func (c *Client) ListBizHostsTopo(opts ...define.OperationOption) define.Operation {
+// FetchSharedClusterNamespaces for bcs resource fetch_shared_cluster_namespaces
+// 获取项目使用的共享集群的命名空间数据
+func (c *Client) FetchSharedClusterNamespaces(opts ...define.OperationOption) define.Operation {
 	/*
 		@params
-		bk_biz_id | int | 业务id
-		host_property_filter ｜ [map] | 查询条件
-		fields | [string] | 查询字段
+		project_code | string | 集群project_code
+		cluster_id | string | 集群id
 	*/
-	path := "list_biz_hosts_topo"
 	return c.BkApiClient.NewOperation(bkapi.OperationConfig{
-		Name:   "list_biz_hosts_topo",
-		Method: "POST",
-		Path:   path,
-	}, opts...)
-}
-
-// SearchBusiness for cmdb resource search_business
-// 查询业务信息
-func (c *Client) SearchBusiness(opts ...define.OperationOption) define.Operation {
-	path := "search_business"
-	return c.BkApiClient.NewOperation(bkapi.OperationConfig{
-		Name:   "search_business",
-		Method: "POST",
-		Path:   path,
+		Name:   "fetch_shared_cluster_namespaces",
+		Method: "GET",
+		Path:   "/bcsproject/v1/projects/{project_code}/clusters/{cluster_id}/native/namespaces",
 	}, opts...)
 }
