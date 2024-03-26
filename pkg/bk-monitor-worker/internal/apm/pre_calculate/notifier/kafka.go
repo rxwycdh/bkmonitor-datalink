@@ -132,7 +132,6 @@ loop:
 		select {
 		case msg := <-claim.Messages():
 			metrics.AddApmNotifierReceiveMessageCount(c.dataId, c.topic)
-			session.MarkMessage(msg, "")
 			c.sendSpans(msg.Value)
 		case <-session.Context().Done():
 			logger.Infof("kafka consume handler session done. topic: %s groupId: %s", c.topic, c.groupId)
@@ -204,6 +203,8 @@ func getConnectionSASLConfig(username, password string) *sarama.Config {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
 	config.Version = sarama.V0_10_2_1
+	config.Consumer.Offsets.AutoCommit.Enable = true
+	config.Consumer.Offsets.AutoCommit.Interval = time.Second
 
 	if username != "" && password != "" {
 		config.Net.SASL.Enable = true
